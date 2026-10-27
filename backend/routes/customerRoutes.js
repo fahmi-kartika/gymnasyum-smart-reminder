@@ -1,9 +1,17 @@
 const express = require('express');
 const router = express.Router();
-const { getAllCustomers, createCustomer } = require('../controllers/customerController');
+const {
+  getAllCustomers,
+  createCustomer,
+  getCustomerById,
+  updateCustomer,
+  deleteCustomer
+} = require('../controllers/customerController');
 
-// Mengatur rute API (Endpoint)
-router.get('/', getAllCustomers); // Untuk mengambil data
-router.post('/', createCustomer); // Untuk menyimpan data
+router.get('/', getAllCustomers);
+router.post('/', createCustomer);
+router.get('/:id', getCustomerById);
+router.put('/:id', updateCustomer);
+router.delete('/:id', deleteCustomer);
 
 module.exports = router;
