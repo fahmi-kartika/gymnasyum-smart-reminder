@@ -15,6 +15,9 @@ app.use(express.json()); // Mengizinkan aplikasi membaca data berformat JSON
 const customerRoutes = require('./routes/customerRoutes');
 app.use('/api/v1/customers', customerRoutes);
 
+const scheduleRoutes = require('./routes/scheduleRoutes');
+app.use('/api/v1/schedules', scheduleRoutes);
+
 // 4. Membuat route pertama (Pintu masuk API)
 app.get('/', (req, res) => {
   res.send('Halo! Backend Gymnasyum Smart Reminder sudah berjalan.');
