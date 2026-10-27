@@ -80,3 +80,92 @@ const createReminder = async (req, res) => {
 };
 
 module.exports = { getAllReminders, createReminder };
+
+// 3. Memperbarui status follow-up & prioritas (PATCH /:id/status)
+const updateReminderStatus = async (req, res) => {
+  const schema = Joi.object({
+    status: Joi.string()
+      .valid('Scheduled', 'Sent', 'Responded', 'No Response')
+      .required()
+      .messages({
+        'any.only': 'Status harus salah satu dari: Scheduled, Sent, Responded, atau No Response',
+        'any.required': 'Status wajib diisi'
+      }),
+    priority: Joi.string().valid('Low', 'Medium', 'High').optional()
+  });
+
+  const { error } = schema.validate(req.body);
+  if (error) {
+    return res.status(400).json({ success: false, message: error.details[0].message });
+  }
+
+  try {
+    const { id } = req.params;
+    let { status, priority } = req.body;
+
+    // Logika otomatisasi: Jika pelanggan 'No Response', naikkan prioritas ke High
+    if (status === 'No Response' && !priority) {
+      priority = 'High';
+    }
+
+    // Query update dinamis (jika priority tidak diisi dan bukan No Response, biarkan nilai priority lama)
+    let query = '';
+    let values = [];
+
+    if (priority) {
+      query = `
+        UPDATE reminders 
+        SET status = $1, priority = $2, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = $3 
+        RETURNING *
+      `;
+      values = [status, priority, id];
+    } else {
+      query = `
+        UPDATE reminders 
+        SET status = $1, updated_at = CURRENT_TIMESTAMP 
+        WHERE id = $2 
+        RETURNING *
+      `;
+      values = [status, id];
+    }
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Data reminder tidak ditemukan' });
+    }
+
+    res.json({
+      success: true,
+      message: 'Status reminder berhasil diperbarui',
+      data: result.rows[0]
+    });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Gagal memperbarui status reminder', error: error.message });
+  }
+};
+
+// 4. Menghapus reminder (DELETE /:id)
+const deleteReminder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const result = await pool.query('DELETE FROM reminders WHERE id = $1 RETURNING *', [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Data reminder tidak ditemukan' });
+    }
+
+    res.json({ success: true, message: 'Reminder berhasil dihapus' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Gagal menghapus reminder', error: error.message });
+  }
+};
+
+// Ekspor semua fungsi
+module.exports = {
+  getAllReminders,
+  createReminder,
+  updateReminderStatus,
+  deleteReminder
+};
