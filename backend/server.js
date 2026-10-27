@@ -18,6 +18,9 @@ app.use('/api/v1/customers', customerRoutes);
 const scheduleRoutes = require('./routes/scheduleRoutes');
 app.use('/api/v1/schedules', scheduleRoutes);
 
+const reminderRoutes = require('./routes/reminderRoutes');
+app.use('/api/v1/reminders', reminderRoutes);
+
 // 4. Membuat route pertama (Pintu masuk API)
 app.get('/', (req, res) => {
   res.send('Halo! Backend Gymnasyum Smart Reminder sudah berjalan.');
