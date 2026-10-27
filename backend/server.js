@@ -12,6 +12,9 @@ require('./config/db');
 app.use(cors()); // Mengizinkan frontend untuk mengakses API
 app.use(express.json()); // Mengizinkan aplikasi membaca data berformat JSON
 
+const customerRoutes = require('./routes/customerRoutes');
+app.use('/api/v1/customers', customerRoutes);
+
 // 4. Membuat route pertama (Pintu masuk API)
 app.get('/', (req, res) => {
   res.send('Halo! Backend Gymnasyum Smart Reminder sudah berjalan.');
