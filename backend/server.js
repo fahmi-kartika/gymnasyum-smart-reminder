@@ -6,6 +6,8 @@ const cors = require('cors');
 const app = express();
 const port = 5000; // Pakai port 5000 untuk backend
 
+require('./config/db');
+
 // 3. Mengatur Middleware
 app.use(cors()); // Mengizinkan frontend untuk mengakses API
 app.use(express.json()); // Mengizinkan aplikasi membaca data berformat JSON
