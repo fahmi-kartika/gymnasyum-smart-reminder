@@ -1,10 +1,12 @@
 const pool = require('../config/db');
 const Joi = require('joi');
 
-// 1. Mengambil semua data reminder beserta detail customer dan schedule (GET)
+// 1. Mengambil data reminder dengan opsi filter status, priority, atau tanggal kelas (GET)
 const getAllReminders = async (req, res) => {
   try {
-    const query = `
+    const { status, priority, date } = req.query;
+
+    let query = `
       SELECT 
         r.id,
         r.status,
@@ -22,10 +24,42 @@ const getAllReminders = async (req, res) => {
       FROM reminders r
       JOIN customers c ON r.customer_id = c.id
       JOIN schedules s ON r.schedule_id = s.id
-      ORDER BY s.class_time ASC, r.created_at DESC
     `;
-    const result = await pool.query(query);
-    res.json({ success: true, data: result.rows });
+
+    const conditions = [];
+    const values = [];
+
+    // Filter berdasarkan status (contoh: ?status=Scheduled)
+    if (status) {
+      values.push(status);
+      conditions.push(`r.status = $${values.length}`);
+    }
+
+    // Filter berdasarkan prioritas (contoh: ?priority=High)
+    if (priority) {
+      values.push(priority);
+      conditions.push(`r.priority = $${values.length}`);
+    }
+
+    // Filter berdasarkan tanggal kelas (contoh: ?date=2026-10-28)
+    if (date) {
+      values.push(date);
+      conditions.push(`DATE(s.class_time) = $${values.length}`);
+    }
+
+    // Gabungkan klausa WHERE jika ada parameter filter yang dikirimkan
+    if (conditions.length > 0) {
+      query += ` WHERE ${conditions.join(' AND ')}`;
+    }
+
+    query += ` ORDER BY s.class_time ASC, r.created_at DESC`;
+
+    const result = await pool.query(query, values);
+    res.json({
+      success: true,
+      total: result.rows.length,
+      data: result.rows
+    });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Terjadi kesalahan di server', error: error.message });
   }
