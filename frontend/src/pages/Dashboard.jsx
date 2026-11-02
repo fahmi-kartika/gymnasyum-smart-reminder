@@ -14,7 +14,6 @@ export default function Dashboard() {
   useEffect(() => {
     const fetchReminders = async () => {
       try {
-        // Pastikan endpoint ini sesuai dengan dokumentasi Swagger Anda
         const response = await API.get('/reminders'); 
         setReminders(response.data.data || response.data);
       } catch (error) {
@@ -29,6 +28,8 @@ export default function Dashboard() {
 
   // Fungsi untuk memformat link WhatsApp Click-to-Chat
   const handleWhatsApp = (phone, customerName, className) => {
+    if (!phone) return;
+    
     // Pastikan nomor diawali dengan 62
     let formattedPhone = phone.startsWith('0') ? '62' + phone.substring(1) : phone;
     
@@ -75,28 +76,27 @@ export default function Dashboard() {
                     reminders.map((reminder) => (
                       <TableRow key={reminder.id}>
                         <TableCell className="font-medium">
-                          {/* Sesuaikan property ini dengan struktur JSON dari backend Anda */}
-                          {reminder.customer?.name || 'Nama Member'}
+                          {reminder.customer_name}
                         </TableCell>
                         <TableCell>
-                          {reminder.schedule?.class_name || 'Nama Kelas'}
+                          {reminder.class_name}
                         </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={
-                            reminder.priority === 'high' ? 'text-red-600 border-red-200 bg-red-50' : 
-                            reminder.priority === 'medium' ? 'text-yellow-600 border-yellow-200 bg-yellow-50' : 
+                            reminder.priority?.toLowerCase() === 'high' ? 'text-red-600 border-red-200 bg-red-50' : 
+                            reminder.priority?.toLowerCase() === 'medium' ? 'text-yellow-600 border-yellow-200 bg-yellow-50' : 
                             'text-green-600 border-green-200 bg-green-50'
                           }>
-                            {reminder.priority?.toUpperCase() || 'NORMAL'}
+                            {reminder.priority?.toUpperCase()}
                           </Badge>
                         </TableCell>
                         <TableCell>
                           <Badge className={
-                            reminder.status === 'pending' ? 'bg-orange-500 hover:bg-orange-600' : 
-                            reminder.status === 'contacted' ? 'bg-blue-500 hover:bg-blue-600' : 
+                            reminder.status?.toLowerCase() === 'pending' ? 'bg-orange-500 hover:bg-orange-600' : 
+                            reminder.status?.toLowerCase() === 'contacted' ? 'bg-blue-500 hover:bg-blue-600' : 
                             'bg-green-500 hover:bg-green-600'
                           }>
-                            {reminder.status || 'pending'}
+                            {reminder.status}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -104,9 +104,9 @@ export default function Dashboard() {
                             size="sm" 
                             className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 ml-auto"
                             onClick={() => handleWhatsApp(
-                              reminder.customer?.phone || '000', 
-                              reminder.customer?.name || 'Member', 
-                              reminder.schedule?.class_name || 'Kelas'
+                              reminder.whatsapp_number, 
+                              reminder.customer_name, 
+                              reminder.class_name
                             )}
                           >
                             <MessageCircle size={16} />
