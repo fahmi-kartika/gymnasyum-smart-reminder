@@ -73,6 +73,20 @@ export default function Customers() {
     }
   };
 
+  const handleDelete = async (id, name) => {
+    // Munculkan konfirmasi sebelum menghapus
+    if (window.confirm(`Apakah Anda yakin ingin menghapus data member "${name}"?`)) {
+      try {
+        await API.delete(`/customers/${id}`);
+        // Memancing useEffect untuk memuat ulang tabel setelah berhasil dihapus
+        setRefreshTrigger((prev) => prev + 1);
+      } catch (error) {
+        console.error('Gagal menghapus data:', error);
+        alert('Gagal menghapus member. Pastikan backend mendukung endpoint DELETE ini.');
+      }
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -194,8 +208,13 @@ export default function Customers() {
                             <Button variant="outline" size="icon" className="h-8 w-8 text-blue-600 border-blue-200 hover:bg-blue-50">
                               <Edit size={16} />
                             </Button>
-                            <Button variant="outline" size="icon" className="h-8 w-8 text-red-600 border-red-200 hover:bg-red-50">
-                              <Trash2 size={16} />
+                            <Button 
+                                variant="outline" 
+                                size="icon" 
+                                className="h-8 w-8 text-red-600 border-red-200 hover:bg-red-50"
+                                onClick={() => handleDelete(customer.id, customer.name)}
+                            >
+                                <Trash2 size={16} />
                             </Button>
                           </div>
                         </TableCell>
