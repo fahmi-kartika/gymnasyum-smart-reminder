@@ -5,14 +5,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Dashboard() {
   const [reminders, setReminders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Mengambil data dari backend Express saat halaman dimuat
   useEffect(() => {
     const fetchReminders = async () => {
+      setLoading(true);
       try {
         const response = await API.get('/reminders'); 
         setReminders(response.data.data || response.data);
@@ -24,19 +26,27 @@ export default function Dashboard() {
     };
 
     fetchReminders();
-  }, []);
+  }, [refreshTrigger]);
 
-  // Fungsi untuk memformat link WhatsApp Click-to-Chat
   const handleWhatsApp = (phone, customerName, className) => {
     if (!phone) return;
-    
-    // Pastikan nomor diawali dengan 62
     let formattedPhone = phone.startsWith('0') ? '62' + phone.substring(1) : phone;
-    
     const message = `Halo ${customerName}, ini dari Gymnasyum! Mengingatkan untuk jadwal kelas ${className} Anda. Apakah Anda akan hadir?`;
     const waLink = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
-    
     window.open(waLink, '_blank');
+  };
+
+  const handleStatusChange = async (id, newStatus) => {
+    try {
+      // Endpoint PATCH disesuaikan dengan Swagger: /reminders/{id}/status
+      await API.patch(`/reminders/${id}/status`, { status: newStatus });
+      setRefreshTrigger(prev => prev + 1); 
+    } catch (error) {
+      // Menangkap pesan error spesifik dari backend Express
+      const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message;
+      console.error('Detail Error Backend:', error.response?.data);
+      alert(`Gagal mengubah status: ${errorMessage}`);
+    }
   };
 
   return (
@@ -91,13 +101,26 @@ export default function Dashboard() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge className={
-                            reminder.status?.toLowerCase() === 'pending' ? 'bg-orange-500 hover:bg-orange-600' : 
-                            reminder.status?.toLowerCase() === 'contacted' ? 'bg-blue-500 hover:bg-blue-600' : 
-                            'bg-green-500 hover:bg-green-600'
-                          }>
-                            {reminder.status}
-                          </Badge>
+                          <Select 
+                            defaultValue={reminder.status || 'Scheduled'} 
+                            onValueChange={(value) => handleStatusChange(reminder.id, value)}
+                          >
+                            <SelectTrigger className={`w-[130px] h-8 text-xs font-medium text-white border-0 ${
+                              reminder.status === 'Scheduled' ? 'bg-orange-500 hover:bg-orange-600' : 
+                              reminder.status === 'Sent' ? 'bg-blue-500 hover:bg-blue-600' : 
+                              reminder.status === 'Responded' ? 'bg-green-500 hover:bg-green-600' : 
+                              reminder.status === 'No Response' ? 'bg-red-500 hover:bg-red-600' :
+                              'bg-gray-500' 
+                            }`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Scheduled">Scheduled</SelectItem>
+                              <SelectItem value="Sent">Sent</SelectItem>
+                              <SelectItem value="Responded">Responded</SelectItem>
+                              <SelectItem value="No Response">No Response</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </TableCell>
                         <TableCell className="text-right">
                           <Button 
