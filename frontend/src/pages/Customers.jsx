@@ -5,9 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-
-// Import komponen shadcn tambahan
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -15,12 +13,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
-  
-  // Tambahkan state baru sebagai pemicu (trigger) untuk memuat ulang data
   const [refreshTrigger, setRefreshTrigger] = useState(0); 
   
+  // State untuk form Dialog (Tambah & Edit)
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editId, setEditId] = useState(null);
+  
   const [formData, setFormData] = useState({
     name: '',
     whatsapp_number: '',
@@ -28,10 +28,9 @@ export default function Customers() {
     preferences: ''
   });
 
-  // Pindahkan fungsi fetch sepenuhnya ke dalam useEffect
   useEffect(() => {
     const fetchCustomers = async () => {
-      setLoading(true); 
+      setLoading(true);
       try {
         const response = await API.get('/customers');
         setCustomers(response.data.data || response.data);
@@ -41,7 +40,6 @@ export default function Customers() {
         setLoading(false);
       }
     };
-
     fetchCustomers();
   }, [refreshTrigger]);
 
@@ -54,31 +52,51 @@ export default function Customers() {
     setFormData((prev) => ({ ...prev, member_type: value }));
   };
 
+  // Membuka form untuk TAMBAH data
+  const handleAddClick = () => {
+    setIsEditMode(false);
+    setEditId(null);
+    setFormData({ name: '', whatsapp_number: '', member_type: 'Regular', preferences: '' });
+    setIsDialogOpen(true);
+  };
+
+  // Membuka form untuk EDIT data (isi form otomatis dari data tabel)
+  const handleEditClick = (customer) => {
+    setIsEditMode(true);
+    setEditId(customer.id);
+    setFormData({
+      name: customer.name,
+      whatsapp_number: customer.whatsapp_number,
+      member_type: customer.member_type || 'Regular',
+      preferences: customer.preferences || ''
+    });
+    setIsDialogOpen(true);
+  };
+
+  // Eksekusi API (bisa POST atau PUT tergantung mode)
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await API.post('/customers', formData);
+      if (isEditMode) {
+        await API.put(`/customers/${editId}`, formData);
+      } else {
+        await API.post('/customers', formData);
+      }
       setIsDialogOpen(false);
-      setFormData({ name: '', whatsapp_number: '', member_type: 'Regular', preferences: '' });
-      
-      // Ubah nilai trigger untuk memancing useEffect memuat ulang data terbaru
       setRefreshTrigger(prev => prev + 1); 
-      
     } catch (error) {
-      console.error('Gagal menambah data:', error);
-      alert('Gagal menambahkan member. Periksa konsol untuk detail error.');
+      console.error('Gagal menyimpan data:', error);
+      alert('Gagal menyimpan data. Periksa konsol untuk detail error.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id, name) => {
-    // Munculkan konfirmasi sebelum menghapus
     if (window.confirm(`Apakah Anda yakin ingin menghapus data member "${name}"?`)) {
       try {
         await API.delete(`/customers/${id}`);
-        // Memancing useEffect untuk memuat ulang tabel setelah berhasil dihapus
         setRefreshTrigger((prev) => prev + 1);
       } catch (error) {
         console.error('Gagal menghapus data:', error);
@@ -95,47 +113,36 @@ export default function Customers() {
           <p className="text-gray-500 mt-1">Kelola daftar pelanggan gym Anda di sini.</p>
         </div>
         
-        {/* Pembungkus Dialog / Modal */}
+        <Button onClick={handleAddClick} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
+          <Plus size={16} />
+          Tambah Member
+        </Button>
+
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
-              <Plus size={16} />
-              Tambah Member
-            </Button>
-          </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Tambah Member Baru</DialogTitle>
+              {/* Judul form dinamis sesuai mode */}
+              <DialogTitle>{isEditMode ? 'Edit Data Member' : 'Tambah Member Baru'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nama Lengkap</Label>
                 <Input 
-                  id="name" 
-                  name="name" 
-                  value={formData.name} 
-                  onChange={handleInputChange} 
-                  placeholder="Contoh: Budi Santoso" 
-                  required 
+                  id="name" name="name" value={formData.name} onChange={handleInputChange} 
+                  placeholder="Contoh: Budi Santoso" required 
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="whatsapp_number">Nomor WhatsApp</Label>
                 <Input 
-                  id="whatsapp_number" 
-                  name="whatsapp_number" 
-                  value={formData.whatsapp_number} 
-                  onChange={handleInputChange} 
-                  placeholder="Contoh: 08123456789" 
-                  required 
+                  id="whatsapp_number" name="whatsapp_number" value={formData.whatsapp_number} 
+                  onChange={handleInputChange} placeholder="Contoh: 08123456789" required 
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="member_type">Tipe Member</Label>
                 <Select value={formData.member_type} onValueChange={handleSelectChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Pilih tipe member" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue placeholder="Pilih tipe member" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Regular">Regular</SelectItem>
                     <SelectItem value="VIP">VIP</SelectItem>
@@ -145,11 +152,8 @@ export default function Customers() {
               <div className="space-y-2">
                 <Label htmlFor="preferences">Preferensi Latihan</Label>
                 <Input 
-                  id="preferences" 
-                  name="preferences" 
-                  value={formData.preferences} 
-                  onChange={handleInputChange} 
-                  placeholder="Contoh: Latihan kardio ringan" 
+                  id="preferences" name="preferences" value={formData.preferences} 
+                  onChange={handleInputChange} placeholder="Contoh: Latihan kardio ringan" 
                 />
               </div>
               <div className="flex justify-end gap-2 pt-4">
@@ -185,9 +189,7 @@ export default function Customers() {
                 <TableBody>
                   {customers.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-6 text-gray-500">
-                        Belum ada data member.
-                      </TableCell>
+                      <TableCell colSpan={5} className="text-center py-6 text-gray-500">Belum ada data member.</TableCell>
                     </TableRow>
                   ) : (
                     customers.map((customer) => (
@@ -200,21 +202,24 @@ export default function Customers() {
                             {customer.member_type?.toUpperCase() || 'REGULAR'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="max-w-[200px] truncate">
-                          {customer.preferences || '-'}
-                        </TableCell>
+                        <TableCell className="max-w-[200px] truncate">{customer.preferences || '-'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            <Button variant="outline" size="icon" className="h-8 w-8 text-blue-600 border-blue-200 hover:bg-blue-50">
+                            {/* Tombol Edit */}
+                            <Button 
+                              variant="outline" size="icon" 
+                              className="h-8 w-8 text-blue-600 border-blue-200 hover:bg-blue-50"
+                              onClick={() => handleEditClick(customer)}
+                            >
                               <Edit size={16} />
                             </Button>
+                            {/* Tombol Hapus */}
                             <Button 
-                                variant="outline" 
-                                size="icon" 
-                                className="h-8 w-8 text-red-600 border-red-200 hover:bg-red-50"
-                                onClick={() => handleDelete(customer.id, customer.name)}
+                              variant="outline" size="icon" 
+                              className="h-8 w-8 text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => handleDelete(customer.id, customer.name)}
                             >
-                                <Trash2 size={16} />
+                              <Trash2 size={16} />
                             </Button>
                           </div>
                         </TableCell>
