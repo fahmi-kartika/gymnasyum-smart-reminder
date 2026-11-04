@@ -28,6 +28,11 @@ export default function Dashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // State untuk modal konfirmasi hapus
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [reminderToDelete, setReminderToDelete] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   const [formData, setFormData] = useState({
     customer_id: '',
     schedule_id: ''
@@ -156,15 +161,23 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = async (id, customerName) => {
-    if (window.confirm(`Hapus reminder untuk ${customerName}?`)) {
-      try {
-        await API.delete(`/reminders/${id}`);
-        setRefreshTrigger(prev => prev + 1);
-      } catch (error) {
-        console.error(error);
-        alert('Gagal menghapus reminder.');
-      }
+  const handleDeleteClick = (reminder) => {
+    setReminderToDelete(reminder);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!reminderToDelete) return;
+    setIsDeleting(true);
+    try {
+      await API.delete(`/reminders/${reminderToDelete.id}`);
+      setRefreshTrigger(prev => prev + 1);
+      setDeleteDialogOpen(false);
+      setReminderToDelete(null);
+    } catch (error) {
+      console.error('Gagal menghapus reminder:', error);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -283,6 +296,42 @@ export default function Dashboard() {
                 </Button>
               </DialogFooter>
             </form>
+          </DialogContent>
+        </Dialog>
+
+        {/* Modal Konfirmasi Hapus Reminder Bergaya Shadcn */}
+        <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <DialogContent className="sm:max-w-[400px] p-6 rounded-xl border border-gray-200/90 shadow-lg bg-white">
+            <DialogHeader className="gap-1 pb-3 border-b border-gray-100">
+              <DialogTitle className="text-base font-bold text-gray-900">
+                Hapus Antrean Reminder
+              </DialogTitle>
+              <DialogDescription className="text-xs text-gray-500">
+                Apakah Anda yakin ingin menghapus antrean reminder untuk member{' '}
+                <span className="font-semibold text-gray-900">{reminderToDelete?.customer_name}</span>? Tindakan ini tidak dapat dibatalkan.
+              </DialogDescription>
+            </DialogHeader>
+
+            <DialogFooter className="mt-5 pt-3 border-t border-gray-100 flex justify-end gap-2 bg-transparent">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setDeleteDialogOpen(false)}
+                className="h-8 px-3.5 text-xs font-medium border-gray-200 rounded-lg hover:bg-gray-100"
+              >
+                Batal
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                disabled={isDeleting}
+                onClick={handleConfirmDelete}
+                className="h-8 px-3.5 text-xs font-semibold rounded-lg bg-red-600 text-white hover:bg-red-700 shadow-2xs"
+              >
+                {isDeleting ? 'Menghapus...' : 'Ya, Hapus'}
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
@@ -530,7 +579,7 @@ export default function Dashboard() {
                             </button>
 
                             <button
-                              onClick={() => handleDelete(reminder.id, reminder.customer_name)}
+                              onClick={() => handleDeleteClick(reminder)}
                               className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition"
                               title="Hapus reminder"
                             >
