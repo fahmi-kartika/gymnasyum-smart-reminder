@@ -249,7 +249,7 @@ export default function Dashboard() {
                             value={reminder.status || 'Scheduled'} 
                             onValueChange={(value) => handleStatusChange(reminder.id, value)}
                           >
-                            <SelectTrigger className={`w-[130px] h-8 text-xs font-medium text-white border-0 ${
+                            <SelectTrigger className={`w-[130px] h-8 text-xs font-medium text-white border-0 [&_svg]:text-white [&_svg]:opacity-100 ${
                               reminder.status === 'Scheduled' ? 'bg-orange-500 hover:bg-orange-600' : 
                               reminder.status === 'Sent' ? 'bg-blue-500 hover:bg-blue-600' : 
                               reminder.status === 'Responded' ? 'bg-green-500 hover:bg-green-600' : 
