@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Customers() {
   const [customers, setCustomers] = useState([]);
@@ -121,7 +122,6 @@ export default function Customers() {
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              {/* Judul form dinamis sesuai mode */}
               <DialogTitle>{isEditMode ? 'Edit Data Member' : 'Tambah Member Baru'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
@@ -173,7 +173,11 @@ export default function Customers() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-4 text-gray-500">Memuat data...</div>
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
           ) : (
             <div className="border rounded-md">
               <Table>
@@ -205,7 +209,6 @@ export default function Customers() {
                         <TableCell className="max-w-[200px] truncate">{customer.preferences || '-'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
-                            {/* Tombol Edit */}
                             <Button 
                               variant="outline" size="icon" 
                               className="h-8 w-8 text-blue-600 border-blue-200 hover:bg-blue-50"
@@ -213,7 +216,6 @@ export default function Customers() {
                             >
                               <Edit size={16} />
                             </Button>
-                            {/* Tombol Hapus */}
                             <Button 
                               variant="outline" size="icon" 
                               className="h-8 w-8 text-red-600 border-red-200 hover:bg-red-50"
