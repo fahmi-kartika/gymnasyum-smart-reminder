@@ -6,7 +6,7 @@ import {
   Clock
 } from 'lucide-react';
 import API from '../services/api';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -509,13 +509,14 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* Footer Navigasi Tabel */}
-          <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-gray-50/30 text-xs text-gray-500">
-            <span>
-              Menampilkan {displayedReminders.length} dari {totalCount} antrean hari ini
-            </span>
-          </div>
         </CardContent>
+
+        {/* Footer Tabel Resmi CardFooter Shadcn */}
+        <CardFooter className="flex items-center justify-between border-t border-gray-100 bg-gray-50/40 px-6 py-3 text-xs text-gray-500 rounded-b-xl">
+          <span>
+            Menampilkan {displayedReminders.length} dari {totalCount} antrean hari ini
+          </span>
+        </CardFooter>
       </Card>
     </div>
   );
