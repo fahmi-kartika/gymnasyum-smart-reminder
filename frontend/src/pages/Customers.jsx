@@ -77,15 +77,15 @@ export default function Customers() {
     setIsDialogOpen(true);
   };
 
-  // LOGIKA USE CASE: Fungsi tarik data riwayat reminder per customer
+  // Mengambil riwayat reminder pelanggan berdasarkan customer_id
   const handleViewHistory = async (customer) => {
     setActiveCustomer(customer);
     setHistoryDialogOpen(true);
     try {
-      const res = await API.get('/reminders');
-      const allReminders = res.data.data || res.data;
-      const custHistory = allReminders.filter(r => r.customer_id === customer.id);
-      setSelectedHistory(custHistory);
+      const res = await API.get(`/reminders?customer_id=${customer.id}`);
+      setSelectedHistory(res.data.data || res.data);
+
+
     } catch (error) {
       console.error('Gagal mengambil riwayat:', error);
     }
