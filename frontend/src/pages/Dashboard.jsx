@@ -3,7 +3,9 @@ import {
   MessageCircle,
   Plus,
   Trash2,
-  Clock
+  Clock,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import API from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -90,10 +92,35 @@ export default function Dashboard() {
   }, [reminders, schedules]);
 
   // Filter tabel berdasarkan tab status yang dipilih
-  const displayedReminders = useMemo(() => {
+  const filteredReminders = useMemo(() => {
     if (statusFilter === 'All') return todaysReminders;
     return todaysReminders.filter(r => r.status === statusFilter);
   }, [todaysReminders, statusFilter]);
+
+  // State Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
+  // Total Halaman
+  const totalPages = Math.max(1, Math.ceil(filteredReminders.length / pageSize));
+
+  // Reset / sesuaikan halaman aktif jika filter berubah atau data berkurang
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  // Reset ke halaman 1 saat filter status berubah
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [statusFilter]);
+
+  // Data yang ditampilkan di tabel pada halaman aktif
+  const paginatedReminders = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredReminders.slice(startIndex, startIndex + pageSize);
+  }, [filteredReminders, currentPage, pageSize]);
 
   // Pilihan jadwal kelas aktif untuk modal booking
   const availableSchedules = useMemo(() => {
@@ -478,14 +505,14 @@ export default function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {displayedReminders.length === 0 ? (
+                  {filteredReminders.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="text-center py-10 text-xs text-gray-400">
                         Tidak ada antrean reminder untuk filter status ini.
                       </TableCell>
                     </TableRow>
                   ) : (
-                    displayedReminders.map((reminder) => (
+                    paginatedReminders.map((reminder) => (
                       <TableRow key={reminder.id} className="border-b border-gray-100 hover:bg-gray-50/60 transition">
                         {/* Member */}
                         <TableCell className="pl-6 font-medium text-xs text-gray-900">
@@ -597,11 +624,66 @@ export default function Dashboard() {
 
         </CardContent>
 
-        {/* Footer Tabel Resmi CardFooter Shadcn */}
-        <CardFooter className="flex items-center justify-between border-t border-gray-100 bg-gray-50/40 px-6 py-3 text-xs text-gray-500 rounded-b-xl">
+        {/* Footer Tabel Resmi CardFooter Shadcn dengan Navigasi Pagination */}
+        <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/40 px-6 py-3 text-xs text-gray-500 rounded-b-xl">
           <span>
-            Menampilkan {displayedReminders.length} dari {totalCount} antrean hari ini
+            Menampilkan {filteredReminders.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(currentPage * pageSize, filteredReminders.length)} dari {filteredReminders.length} antrean
           </span>
+
+          <div className="flex items-center gap-4 sm:gap-6">
+            {/* Pilihan Baris Per Halaman */}
+            <div className="flex items-center gap-2">
+              <span className="text-[11px] text-gray-500">Baris:</span>
+              <Select
+                value={pageSize.toString()}
+                onValueChange={(val) => {
+                  setPageSize(Number(val));
+                  setCurrentPage(1);
+                }}
+              >
+                <SelectTrigger className="h-7 w-[68px] text-xs bg-white border border-gray-200 shadow-2xs rounded-md">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent position="popper">
+                  <SelectItem value="5">5</SelectItem>
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="20">20</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Info Halaman */}
+            <span className="text-[11px] font-medium text-gray-600">
+              Hal {currentPage} dari {totalPages}
+            </span>
+
+            {/* Tombol Halaman Prev / Next */}
+            <div className="flex items-center gap-1">
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                className="h-7 w-7 rounded-md border-gray-200 bg-white hover:bg-gray-100 shadow-2xs disabled:opacity-40"
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                title="Halaman sebelumnya"
+              >
+                <ChevronLeft size={14} />
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="icon-sm"
+                className="h-7 w-7 rounded-md border-gray-200 bg-white hover:bg-gray-100 shadow-2xs disabled:opacity-40"
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage >= totalPages}
+                title="Halaman selanjutnya"
+              >
+                <ChevronRight size={14} />
+              </Button>
+            </div>
+          </div>
         </CardFooter>
       </Card>
     </div>
