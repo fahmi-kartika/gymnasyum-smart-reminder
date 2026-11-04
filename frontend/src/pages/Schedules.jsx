@@ -441,15 +441,15 @@ export default function Schedules() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="table-fixed w-full min-w-[700px]">
                 <TableHeader>
                   <TableRow className="border-b border-gray-100 bg-gray-50/50">
-                    <TableHead className="text-xs font-semibold text-gray-500 pl-6">Nama Kelas</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">Tanggal &amp; Waktu</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">Instruktur</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">Kuota</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">Status</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
+                    <TableHead className="w-[25%] text-xs font-semibold text-gray-500 pl-6">Nama Kelas</TableHead>
+                    <TableHead className="w-[22%] text-xs font-semibold text-gray-500">Tanggal &amp; Waktu</TableHead>
+                    <TableHead className="w-[18%] text-xs font-semibold text-gray-500">Instruktur</TableHead>
+                    <TableHead className="w-[12%] text-xs font-semibold text-gray-500">Kuota</TableHead>
+                    <TableHead className="w-[12%] text-xs font-semibold text-gray-500">Status</TableHead>
+                    <TableHead className="w-[11%] text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -464,18 +464,18 @@ export default function Schedules() {
                       const isUpcoming = new Date(schedule.class_time) >= now;
                       return (
                         <TableRow key={schedule.id} className="border-b border-gray-100 hover:bg-gray-50/60 transition">
-                          <TableCell className="pl-6 font-medium text-xs text-gray-900">
+                          <TableCell className="pl-6 font-medium text-xs text-gray-900 truncate">
                             {schedule.class_name}
                           </TableCell>
                           <TableCell className="text-xs">
-                            <div className="font-medium text-gray-900">
+                            <div className="font-medium text-gray-900 truncate">
                               {formatDateTime(schedule.class_time)}
                             </div>
-                            <div className="text-[11px] text-gray-500 mt-0.5">
+                            <div className="text-[11px] text-gray-500 mt-0.5 truncate">
                               {formatTimeOnly(schedule.class_time)}
                             </div>
                           </TableCell>
-                          <TableCell className="text-xs text-gray-700">
+                          <TableCell className="text-xs text-gray-700 truncate">
                             {schedule.instructor_name}
                           </TableCell>
                           <TableCell className="text-xs">

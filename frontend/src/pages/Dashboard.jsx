@@ -573,14 +573,14 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="table-fixed w-full min-w-[720px]">
                 <TableHeader>
                   <TableRow className="border-b border-gray-100 bg-gray-50/50">
-                    <TableHead className="text-xs font-semibold text-gray-500 pl-6">Member</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">Kelas &amp; Jam</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">Prioritas</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">Status Interaksi</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
+                    <TableHead className="w-[24%] text-xs font-semibold text-gray-500 pl-6">Member</TableHead>
+                    <TableHead className="w-[26%] text-xs font-semibold text-gray-500">Kelas &amp; Jam</TableHead>
+                    <TableHead className="w-[14%] text-xs font-semibold text-gray-500">Prioritas</TableHead>
+                    <TableHead className="w-[23%] text-xs font-semibold text-gray-500">Status Interaksi</TableHead>
+                    <TableHead className="w-[13%] text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -594,16 +594,16 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
                     paginatedReminders.map((reminder) => (
                       <TableRow key={reminder.id} className="border-b border-gray-100 hover:bg-gray-50/60 transition">
                         {/* Member */}
-                        <TableCell className="pl-6 font-medium text-xs text-gray-900">
-                          <div>{reminder.customer_name}</div>
-                          <div className="text-[11px] text-gray-400 font-normal">
+                        <TableCell className="pl-6 font-medium text-xs text-gray-900 truncate">
+                          <div className="truncate">{reminder.customer_name}</div>
+                          <div className="text-[11px] text-gray-400 font-normal truncate">
                             {reminder.whatsapp_number}
                           </div>
                         </TableCell>
 
                         {/* Kelas & Jam */}
                         <TableCell className="text-xs">
-                          <div className="font-medium text-gray-900">{reminder.class_name}</div>
+                          <div className="font-medium text-gray-900 truncate">{reminder.class_name}</div>
                           <div className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
                             <Clock size={11} className="text-gray-400" />
                             <span>

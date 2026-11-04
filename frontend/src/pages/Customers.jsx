@@ -526,14 +526,14 @@ export default function Customers() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="table-fixed w-full min-w-[650px]">
                 <TableHeader>
                   <TableRow className="border-b border-gray-100 bg-gray-50/50">
-                    <TableHead className="text-xs font-semibold text-gray-500 pl-6">Nama Member</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">No. WhatsApp</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">Tipe Member</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500">Preferensi Latihan</TableHead>
-                    <TableHead className="text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
+                    <TableHead className="w-[24%] text-xs font-semibold text-gray-500 pl-6">Nama Member</TableHead>
+                    <TableHead className="w-[18%] text-xs font-semibold text-gray-500">No. WhatsApp</TableHead>
+                    <TableHead className="w-[15%] text-xs font-semibold text-gray-500">Tipe Member</TableHead>
+                    <TableHead className="w-[30%] text-xs font-semibold text-gray-500">Preferensi Latihan</TableHead>
+                    <TableHead className="w-[13%] text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -546,10 +546,10 @@ export default function Customers() {
                   ) : (
                     paginatedCustomers.map((customer) => (
                       <TableRow key={customer.id} className="border-b border-gray-100 hover:bg-gray-50/60 transition">
-                        <TableCell className="pl-6 font-medium text-xs text-gray-900">
+                        <TableCell className="pl-6 font-medium text-xs text-gray-900 truncate">
                           {customer.name}
                         </TableCell>
-                        <TableCell className="text-xs text-gray-600 font-mono">
+                        <TableCell className="text-xs text-gray-600 font-mono truncate">
                           {customer.whatsapp_number}
                         </TableCell>
                         <TableCell>
@@ -564,7 +564,7 @@ export default function Customers() {
                             {customer.member_type?.toUpperCase() || 'REGULAR'}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-xs text-gray-600 max-w-[240px] truncate">
+                        <TableCell className="text-xs text-gray-600 truncate" title={customer.preferences || ''}>
                           {customer.preferences || '-'}
                         </TableCell>
                         <TableCell className="text-right pr-6">
