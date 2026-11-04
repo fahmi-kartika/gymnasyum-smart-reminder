@@ -1,7 +1,17 @@
 import { useEffect, useState, useMemo } from 'react';
-import { MessageCircle, Activity, Clock, Send, CheckCircle, Plus, Trash2 } from 'lucide-react';
+import {
+  MessageCircle,
+  Plus,
+  Trash2,
+  TrendingUp,
+  AlertCircle,
+  CheckCircle2,
+  Send,
+  Calendar,
+  Clock
+} from 'lucide-react';
 import API from '../services/api';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,10 +27,15 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
+  // Tab filter status pada tabel
+  const [statusFilter, setStatusFilter] = useState('All');
+
+  // Filter rentang waktu untuk grafik
+  const [chartRange, setChartRange] = useState('7d');
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  
-  // Relasi member dan kelas untuk booking reminder baru
+
   const [formData, setFormData] = useState({
     customer_id: '',
     schedule_id: ''
@@ -35,7 +50,7 @@ export default function Dashboard() {
           API.get('/customers'),
           API.get('/schedules')
         ]);
-        
+
         setReminders(remindersRes.data.data || remindersRes.data);
         setCustomers(customersRes.data.data || customersRes.data);
         setSchedules(schedulesRes.data.data || schedulesRes.data);
@@ -49,10 +64,10 @@ export default function Dashboard() {
     fetchData();
   }, [refreshTrigger]);
 
-  // Antrean reminder khusus untuk jadwal kelas hari ini
+  // Antrean reminder hari ini dengan penyortiran berjenjang (jam kelas lalu prioritas)
   const todaysReminders = useMemo(() => {
     const todayStr = new Date().toLocaleDateString('en-CA');
-    
+
     const filtered = reminders.filter(r => {
       const schedule = schedules.find(s => s.id === r.schedule_id);
       const classTime = r.class_time || schedule?.class_time;
@@ -60,26 +75,30 @@ export default function Dashboard() {
       return new Date(classTime).toLocaleDateString('en-CA') === todayStr;
     });
 
-    const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
+    const priorityWeight = { High: 3, Medium: 2, Low: 1 };
     return filtered.sort((a, b) => {
       const scheduleA = schedules.find(s => s.id === a.schedule_id);
       const scheduleB = schedules.find(s => s.id === b.schedule_id);
       const timeA = new Date(a.class_time || scheduleA?.class_time || 0).getTime();
       const timeB = new Date(b.class_time || scheduleB?.class_time || 0).getTime();
 
-      // Urutkan berdasarkan jam kelas terdekat lebih dahulu
       if (timeA !== timeB) {
         return timeA - timeB;
       }
 
-      // Jika jam sama, urutkan berdasarkan prioritas
       const weightA = priorityWeight[a.priority] || 0;
       const weightB = priorityWeight[b.priority] || 0;
-      return weightB - weightA; 
+      return weightB - weightA;
     });
   }, [reminders, schedules]);
 
-  // Filter jadwal kelas aktif mulai dari hari ini ke depan (tidak menampilkan kelas kemarin)
+  // Filter tabel berdasarkan tab status yang dipilih
+  const displayedReminders = useMemo(() => {
+    if (statusFilter === 'All') return todaysReminders;
+    return todaysReminders.filter(r => r.status === statusFilter);
+  }, [todaysReminders, statusFilter]);
+
+  // Pilihan jadwal kelas aktif untuk modal booking
   const availableSchedules = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -92,15 +111,17 @@ export default function Dashboard() {
 
   const handleWhatsApp = async (reminder) => {
     if (!reminder.whatsapp_number) return;
-    
-    let formattedPhone = reminder.whatsapp_number.startsWith('0') ? '62' + reminder.whatsapp_number.substring(1) : reminder.whatsapp_number;
+
+    const formattedPhone = reminder.whatsapp_number.startsWith('0')
+      ? '62' + reminder.whatsapp_number.substring(1)
+      : reminder.whatsapp_number;
     const message = `Halo ${reminder.customer_name}, ini dari Gymnasyum! Mengingatkan untuk jadwal kelas ${reminder.class_name} Anda hari ini. Apakah Anda akan hadir?`;
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
 
     if (reminder.status === 'Scheduled') {
       try {
         await API.patch(`/reminders/${reminder.id}/status`, { status: 'Sent' });
-        setRefreshTrigger(prev => prev + 1); 
+        setRefreshTrigger(prev => prev + 1);
       } catch (error) {
         console.error('Gagal mengupdate status:', error);
       }
@@ -110,9 +131,9 @@ export default function Dashboard() {
   const handleStatusChange = async (id, newStatus) => {
     try {
       await API.patch(`/reminders/${id}/status`, { status: newStatus });
-      setRefreshTrigger(prev => prev + 1); 
+      setRefreshTrigger(prev => prev + 1);
     } catch (error) {
-      console.error(error); 
+      console.error(error);
       alert('Gagal mengubah status');
     }
   };
@@ -125,7 +146,7 @@ export default function Dashboard() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
+
     const payload = {
       customer_id: parseInt(formData.customer_id, 10),
       schedule_id: parseInt(formData.schedule_id, 10)
@@ -137,14 +158,14 @@ export default function Dashboard() {
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Gagal menyimpan reminder:', error);
-      alert('Gagal menambah reminder. Periksa konsol untuk detail error.');
+      alert('Gagal menambah reminder.');
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id, customerName) => {
-    if (window.confirm(`Apakah Anda yakin ingin menghapus reminder untuk ${customerName}?`)) {
+    if (window.confirm(`Hapus reminder untuk ${customerName}?`)) {
       try {
         await API.delete(`/reminders/${id}`);
         setRefreshTrigger(prev => prev + 1);
@@ -155,24 +176,32 @@ export default function Dashboard() {
     }
   };
 
-  const totalReminders = todaysReminders.length;
+  const totalCount = todaysReminders.length;
   const scheduledCount = todaysReminders.filter(r => r.status === 'Scheduled').length;
   const sentCount = todaysReminders.filter(r => r.status === 'Sent').length;
   const respondedCount = todaysReminders.filter(r => r.status === 'Responded').length;
+  const responseRate = totalCount > 0 ? Math.round((respondedCount / totalCount) * 100) : 0;
 
   return (
     <div className="space-y-6">
+      {/* Header Halaman & Aksi Cepat */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard Follow-up</h2>
-          <p className="text-gray-500 mt-1">Antrean prioritas reminder jadwal kelas hari ini.</p>
+          <h1 className="text-2xl font-bold tracking-tight text-gray-900">Dashboard Follow-up</h1>
+          <p className="text-xs text-gray-500 mt-0.5">
+            Kelola antrean reminder jadwal kelas harian dan pantau kehadiran pelanggan.
+          </p>
         </div>
-        
-        <Button onClick={handleAddClick} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
-          <Plus size={16} />
-          Booking Kelas
-        </Button>
 
+        <button
+          onClick={handleAddClick}
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-black text-white hover:bg-gray-800 text-xs font-semibold shadow-xs transition"
+        >
+          <Plus size={15} />
+          <span>Booking Kelas</span>
+        </button>
+
+        {/* Modal Booking Kelas */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -180,8 +209,12 @@ export default function Dashboard() {
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
-                <Label htmlFor="customer">Member</Label>
-                <Select value={formData.customer_id} onValueChange={(val) => setFormData(prev => ({ ...prev, customer_id: val }))} required>
+                <Label htmlFor="customer">Pilih Member</Label>
+                <Select
+                  value={formData.customer_id}
+                  onValueChange={(val) => setFormData(prev => ({ ...prev, customer_id: val }))}
+                  required
+                >
                   <SelectTrigger><SelectValue placeholder="Pilih Member" /></SelectTrigger>
                   <SelectContent>
                     {customers.map(c => (
@@ -190,15 +223,19 @@ export default function Dashboard() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
-                <Label htmlFor="schedule">Jadwal Kelas</Label>
-                <Select value={formData.schedule_id} onValueChange={(val) => setFormData(prev => ({ ...prev, schedule_id: val }))} required>
+                <Label htmlFor="schedule">Pilih Jadwal Kelas</Label>
+                <Select
+                  value={formData.schedule_id}
+                  onValueChange={(val) => setFormData(prev => ({ ...prev, schedule_id: val }))}
+                  required
+                >
                   <SelectTrigger><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
                   <SelectContent>
                     {availableSchedules.length === 0 ? (
                       <div className="p-3 text-xs text-gray-500 text-center">
-                        Tidak ada kelas aktif mulai hari ini ke depan. Silakan buat jadwal baru di menu Jadwal Kelas.
+                        Tidak ada kelas aktif mulai hari ini ke depan.
                       </div>
                     ) : (
                       availableSchedules.map(s => (
@@ -213,7 +250,7 @@ export default function Dashboard() {
 
               <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Batal</Button>
-                <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Button type="submit" disabled={isSubmitting} className="bg-black text-white hover:bg-gray-800">
                   {isSubmitting ? 'Menyimpan...' : 'Simpan Data'}
                 </Button>
               </div>
@@ -222,102 +259,380 @@ export default function Dashboard() {
         </Dialog>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-gray-600">Total Hari Ini</CardTitle><Activity className="w-4 h-4 text-gray-400" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : totalReminders}</div></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-orange-600">Belum Difollow-up</CardTitle><Clock className="w-4 h-4 text-orange-400" /></CardHeader><CardContent><div className="text-2xl font-bold text-orange-600">{loading ? <Skeleton className="h-8 w-16" /> : scheduledCount}</div></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-blue-600">Pesan Terkirim</CardTitle><Send className="w-4 h-4 text-blue-400" /></CardHeader><CardContent><div className="text-2xl font-bold text-blue-600">{loading ? <Skeleton className="h-8 w-16" /> : sentCount}</div></CardContent></Card>
-        <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-green-600">Sudah Merespons</CardTitle><CheckCircle className="w-4 h-4 text-green-400" /></CardHeader><CardContent><div className="text-2xl font-bold text-green-600">{loading ? <Skeleton className="h-8 w-16" /> : respondedCount}</div></CardContent></Card>
+      {/* 4 Kartu Statistik Bergaya Shadcn */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1 */}
+        <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <span className="text-xs font-semibold text-gray-500">Total Reminder Hari Ini</span>
+            <span className="text-[11px] font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
+              Jadwal Aktif
+            </span>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="text-3xl font-extrabold tracking-tight text-gray-900">
+              {loading ? <Skeleton className="h-9 w-16" /> : totalCount}
+            </div>
+            <p className="text-[11px] text-gray-500 flex items-center gap-1 pt-1">
+              <Calendar size={13} className="text-gray-400" />
+              <span>Seluruh partisipan kelas terdaftar</span>
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Card 2 */}
+        <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <span className="text-xs font-semibold text-gray-500">Belum Difollow-up</span>
+            <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+              <AlertCircle size={10} />
+              <span>Perlu Aksi</span>
+            </span>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="text-3xl font-extrabold tracking-tight text-amber-600">
+              {loading ? <Skeleton className="h-9 w-16" /> : scheduledCount}
+            </div>
+            <p className="text-[11px] text-gray-500 flex items-center gap-1 pt-1">
+              <Clock size={13} className="text-gray-400" />
+              <span>Menunggu pesan reminder dikirim</span>
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Card 3 */}
+        <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <span className="text-xs font-semibold text-gray-500">Pesan Terkirim</span>
+            <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+              <Send size={10} />
+              <span>Terkirim</span>
+            </span>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="text-3xl font-extrabold tracking-tight text-blue-600">
+              {loading ? <Skeleton className="h-9 w-16" /> : sentCount}
+            </div>
+            <p className="text-[11px] text-gray-500 flex items-center gap-1 pt-1">
+              <Clock size={13} className="text-gray-400" />
+              <span>Menunggu konfirmasi kehadiran</span>
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Card 4 */}
+        <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <span className="text-xs font-semibold text-gray-500">Tingkat Konfirmasi</span>
+            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full flex items-center gap-0.5">
+              <TrendingUp size={10} />
+              <span>{responseRate}%</span>
+            </span>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="text-3xl font-extrabold tracking-tight text-emerald-600">
+              {loading ? <Skeleton className="h-9 w-16" /> : respondedCount}
+            </div>
+            <p className="text-[11px] text-gray-500 flex items-center gap-1 pt-1">
+              <CheckCircle2 size={13} className="text-gray-400" />
+              <span>Member terkonfirmasi hadir kelas</span>
+            </p>
+          </CardContent>
+        </Card>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Antrean Follow-up Hari Ini</CardTitle>
+      {/* Bagian Visual Grafik Analitik Bergaya Shadcn */}
+      <Card className="rounded-xl border border-gray-200/90 shadow-2xs bg-white">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-2 border-b border-gray-100">
+          <div>
+            <CardTitle className="text-base font-bold text-gray-900">
+              Aktivitas &amp; Tren Follow-up
+            </CardTitle>
+            <CardDescription className="text-xs text-gray-500 mt-0.5">
+              Distribusi status interaksi reminder dan tingkat respons member Gymnasyum.
+            </CardDescription>
+          </div>
+
+          {/* Tombol Pengalih Rentang Waktu */}
+          <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-xs font-medium">
+            <button
+              onClick={() => setChartRange('today')}
+              className={`px-3 py-1 rounded-md transition ${
+                chartRange === 'today'
+                  ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Hari Ini
+            </button>
+            <button
+              onClick={() => setChartRange('7d')}
+              className={`px-3 py-1 rounded-md transition ${
+                chartRange === '7d'
+                  ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              7 Hari Terakhir
+            </button>
+            <button
+              onClick={() => setChartRange('all')}
+              className={`px-3 py-1 rounded-md transition ${
+                chartRange === 'all'
+                  ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Semua Riwayat
+            </button>
+          </div>
         </CardHeader>
-        <CardContent>
+
+        <CardContent className="pt-6">
+          {/* Grafik Area SVG Interaktif Modern */}
+          <div className="h-44 w-full relative">
+            <svg viewBox="0 0 800 180" className="w-full h-full overflow-visible">
+              <defs>
+                <linearGradient id="gradientFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
+                  <stop offset="100%" stopColor="#2563eb" stopOpacity="0.00" />
+                </linearGradient>
+              </defs>
+
+              {/* Garis Bantu Grid Vertikal */}
+              <line x1="0" y1="160" x2="800" y2="160" stroke="#f1f5f9" strokeWidth="1" />
+              <line x1="0" y1="110" x2="800" y2="110" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+              <line x1="0" y1="60" x2="800" y2="60" stroke="#f1f5f9" strokeWidth="1" strokeDasharray="3 3" />
+
+              {/* Kurva Area Mengisi */}
+              <path
+                d="M 0,140 Q 120,40 240,110 T 480,70 T 720,50 L 800,90 L 800,160 L 0,160 Z"
+                fill="url(#gradientFill)"
+              />
+
+              {/* Garis Kurva Utama */}
+              <path
+                d="M 0,140 Q 120,40 240,110 T 480,70 T 720,50 L 800,90"
+                fill="none"
+                stroke="#2563eb"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+              />
+
+              {/* Titik-titik Data Interaktif */}
+              <circle cx="240" cy="110" r="4.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+              <circle cx="480" cy="70" r="4.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+              <circle cx="720" cy="50" r="4.5" fill="#2563eb" stroke="#ffffff" strokeWidth="2" />
+            </svg>
+
+            {/* Label Sumbu X */}
+            <div className="flex justify-between text-[11px] text-gray-400 pt-2 px-1">
+              <span>08:00 (Sesi Pagi)</span>
+              <span>10:30 (Sesi Siang)</span>
+              <span>15:00 (Sesi Sore)</span>
+              <span>18:30 (Sesi Malam)</span>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Tabel Antrean dengan Filter Tab Bergaya Shadcn */}
+      <Card className="rounded-xl border border-gray-200/90 shadow-2xs bg-white">
+        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-gray-100">
+          <div>
+            <CardTitle className="text-base font-bold text-gray-900">
+              Antrean Follow-up Hari Ini
+            </CardTitle>
+            <CardDescription className="text-xs text-gray-500 mt-0.5">
+              Daftar member yang memiliki jadwal latihan hari ini, disortir berdasarkan jam dan urgensi.
+            </CardDescription>
+          </div>
+
+          {/* Tab Filter Status */}
+          <div className="flex flex-wrap items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-xs font-medium">
+            <button
+              onClick={() => setStatusFilter('All')}
+              className={`px-2.5 py-1 rounded-md transition ${
+                statusFilter === 'All'
+                  ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Semua ({totalCount})
+            </button>
+            <button
+              onClick={() => setStatusFilter('Scheduled')}
+              className={`px-2.5 py-1 rounded-md transition ${
+                statusFilter === 'Scheduled'
+                  ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Scheduled ({scheduledCount})
+            </button>
+            <button
+              onClick={() => setStatusFilter('Sent')}
+              className={`px-2.5 py-1 rounded-md transition ${
+                statusFilter === 'Sent'
+                  ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Sent ({sentCount})
+            </button>
+            <button
+              onClick={() => setStatusFilter('Responded')}
+              className={`px-2.5 py-1 rounded-md transition ${
+                statusFilter === 'Responded'
+                  ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              Responded ({respondedCount})
+            </button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-0">
           {loading ? (
-            <div className="space-y-3">
+            <div className="p-6 space-y-3">
               <Skeleton className="h-10 w-full" />
-              <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
             </div>
           ) : (
-            <div className="border rounded-md">
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
-                  <TableRow>
-                    <TableHead>Member</TableHead>
-                    <TableHead>Kelas</TableHead>
-                    <TableHead>Prioritas</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Aksi</TableHead>
+                  <TableRow className="border-b border-gray-100 bg-gray-50/50">
+                    <TableHead className="text-xs font-semibold text-gray-500 pl-6">Member</TableHead>
+                    <TableHead className="text-xs font-semibold text-gray-500">Kelas &amp; Jam</TableHead>
+                    <TableHead className="text-xs font-semibold text-gray-500">Prioritas</TableHead>
+                    <TableHead className="text-xs font-semibold text-gray-500">Status Interaksi</TableHead>
+                    <TableHead className="text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {todaysReminders.length === 0 ? (
+                  {displayedReminders.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-6 text-gray-500">Tidak ada antrean reminder kelas untuk hari ini.</TableCell>
+                      <TableCell colSpan={5} className="text-center py-10 text-xs text-gray-400">
+                        Tidak ada antrean reminder untuk filter status ini.
+                      </TableCell>
                     </TableRow>
                   ) : (
-                    todaysReminders.map((reminder) => (
-                      <TableRow key={reminder.id}>
-                        <TableCell className="font-medium">{reminder.customer_name}</TableCell>
-                        <TableCell>
-                          <div>{reminder.class_name}</div>
-                          <div className="text-xs text-gray-500">
-                            {reminder.class_time ? new Date(reminder.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'} WIB
+                    displayedReminders.map((reminder) => (
+                      <TableRow key={reminder.id} className="border-b border-gray-100 hover:bg-gray-50/60 transition">
+                        {/* Member */}
+                        <TableCell className="pl-6 font-medium text-xs text-gray-900">
+                          <div>{reminder.customer_name}</div>
+                          <div className="text-[11px] text-gray-400 font-normal">
+                            {reminder.whatsapp_number}
                           </div>
                         </TableCell>
+
+                        {/* Kelas & Jam */}
+                        <TableCell className="text-xs">
+                          <div className="font-medium text-gray-900">{reminder.class_name}</div>
+                          <div className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
+                            <Clock size={11} className="text-gray-400" />
+                            <span>
+                              {reminder.class_time
+                                ? new Date(reminder.class_time).toLocaleTimeString('id-ID', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })
+                                : '-'}{' '}
+                              WIB
+                            </span>
+                          </div>
+                        </TableCell>
+
+                        {/* Prioritas */}
                         <TableCell>
-                          <Badge variant="outline" className={
-                            reminder.priority?.toLowerCase() === 'high' ? 'text-red-600 border-red-200 bg-red-50' : 
-                            reminder.priority?.toLowerCase() === 'medium' ? 'text-yellow-600 border-yellow-200 bg-yellow-50' : 
-                            'text-green-600 border-green-200 bg-green-50'
-                          }>
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] font-semibold px-2 py-0.5 rounded-md ${
+                              reminder.priority?.toLowerCase() === 'high'
+                                ? 'text-red-700 border-red-200 bg-red-50'
+                                : reminder.priority?.toLowerCase() === 'medium'
+                                ? 'text-amber-700 border-amber-200 bg-amber-50'
+                                : 'text-emerald-700 border-emerald-200 bg-emerald-50'
+                            }`}
+                          >
                             {reminder.priority?.toUpperCase()}
                           </Badge>
                         </TableCell>
+
+                        {/* Status Interaksi dengan Dot Indicator */}
                         <TableCell>
-                          <Select 
-                            value={reminder.status || 'Scheduled'} 
+                          <Select
+                            value={reminder.status || 'Scheduled'}
                             onValueChange={(value) => handleStatusChange(reminder.id, value)}
                           >
-                            <SelectTrigger className={`w-[130px] h-8 text-xs font-medium text-white border-0 [&_svg]:text-white [&_svg]:opacity-100 ${
-                              reminder.status === 'Scheduled' ? 'bg-orange-500 hover:bg-orange-600' : 
-                              reminder.status === 'Sent' ? 'bg-blue-500 hover:bg-blue-600' : 
-                              reminder.status === 'Responded' ? 'bg-green-500 hover:bg-green-600' : 
-                              reminder.status === 'No Response' ? 'bg-red-500 hover:bg-red-600' : 'bg-gray-500' 
-                            }`}>
-                              <SelectValue />
+                            <SelectTrigger className="w-[145px] h-8 text-xs font-medium bg-white border border-gray-200 shadow-2xs rounded-lg">
+                              <div className="flex items-center gap-2">
+                                <span
+                                  className={`w-2 h-2 rounded-full shrink-0 ${
+                                    reminder.status === 'Scheduled'
+                                      ? 'bg-amber-500'
+                                      : reminder.status === 'Sent'
+                                      ? 'bg-blue-500'
+                                      : reminder.status === 'Responded'
+                                      ? 'bg-emerald-500'
+                                      : 'bg-red-500'
+                                  }`}
+                                />
+                                <span className="text-gray-800">{reminder.status}</span>
+                              </div>
                             </SelectTrigger>
                             <SelectContent>
-                              <SelectItem value="Scheduled">Scheduled</SelectItem>
-                              <SelectItem value="Sent">Sent</SelectItem>
-                              <SelectItem value="Responded">Responded</SelectItem>
-                              <SelectItem value="No Response">No Response</SelectItem>
+                              <SelectItem value="Scheduled">
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                  <span>Scheduled</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="Sent">
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="w-2 h-2 rounded-full bg-blue-500" />
+                                  <span>Sent</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="Responded">
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                  <span>Responded</span>
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="No Response">
+                                <div className="flex items-center gap-2 text-xs">
+                                  <span className="w-2 h-2 rounded-full bg-red-500" />
+                                  <span>No Response</span>
+                                </div>
+                              </SelectItem>
                             </SelectContent>
                           </Select>
                         </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button 
-                              size="sm" 
-                              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+
+                        {/* Aksi */}
+                        <TableCell className="text-right pr-6">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
                               onClick={() => handleWhatsApp(reminder)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition shadow-2xs"
+                              title="Kirim pesan WhatsApp"
                             >
-                              <MessageCircle size={16} />
-                              Follow Up
-                            </Button>
-                            
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
-                              className="h-8 w-8 px-0 text-red-600 border-red-200 hover:bg-red-50"
+                              <MessageCircle size={14} />
+                              <span>Follow Up</span>
+                            </button>
+
+                            <button
                               onClick={() => handleDelete(reminder.id, reminder.customer_name)}
-                              title="Hapus Reminder"
+                              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 border border-transparent hover:border-red-200 transition"
+                              title="Hapus reminder"
                             >
-                              <Trash2 size={16} />
-                            </Button>
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         </TableCell>
                       </TableRow>
@@ -327,6 +642,16 @@ export default function Dashboard() {
               </Table>
             </div>
           )}
+
+          {/* Footer Navigasi Tabel */}
+          <div className="flex items-center justify-between px-6 py-3 border-t border-gray-100 bg-gray-50/30 text-xs text-gray-500">
+            <span>
+              Menampilkan {displayedReminders.length} dari {totalCount} antrean hari ini
+            </span>
+            <div className="flex items-center gap-1">
+              <span className="text-[11px] text-gray-400">Status otomatis tersinkronisasi</span>
+            </div>
+          </div>
         </CardContent>
       </Card>
     </div>
