@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Schedules() {
   const [schedules, setSchedules] = useState([]);
@@ -184,7 +185,11 @@ export default function Schedules() {
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="text-center py-4 text-gray-500">Memuat data...</div>
+            <div className="space-y-3">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
           ) : (
             <div className="border rounded-md">
               <Table>
