@@ -47,6 +47,11 @@ const {
  *     tags: [Reminders]
  *     parameters:
  *       - in: query
+ *         name: customer_id
+ *         schema:
+ *           type: integer
+ *         description: Filter berdasarkan ID pelanggan
+ *       - in: query
  *         name: status
  *         schema:
  *           type: string

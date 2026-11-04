@@ -4,7 +4,7 @@ const Joi = require('joi');
 // 1. Mengambil data reminder dengan opsi filter status, priority, atau tanggal kelas (GET)
 const getAllReminders = async (req, res) => {
   try {
-    const { status, priority, date } = req.query;
+    const { status, priority, date, customer_id } = req.query;
 
     let query = `
       SELECT 
@@ -28,6 +28,11 @@ const getAllReminders = async (req, res) => {
 
     const conditions = [];
     const values = [];
+
+    if (customer_id) {
+      values.push(customer_id);
+      conditions.push(`r.customer_id = $${values.length}`);
+    }
 
     if (status) {
       values.push(status);
