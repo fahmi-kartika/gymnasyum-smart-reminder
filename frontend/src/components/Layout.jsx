@@ -141,7 +141,7 @@ export default function Layout({ children }) {
       </aside>
 
       {/* Area Konten Utama */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-scroll [scrollbar-gutter:stable]">
         <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
           {children || <Outlet />}
         </div>
