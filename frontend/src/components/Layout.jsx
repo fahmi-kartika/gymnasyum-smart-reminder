@@ -7,7 +7,8 @@ import {
   Dumbbell,
   Menu,
   X,
-  LogOut
+  LogOut,
+  User
 } from 'lucide-react';
 
 export default function Layout({ children }) {
@@ -119,8 +120,8 @@ export default function Layout({ children }) {
         <div className="p-3.5 border-t border-gray-100 bg-gray-50/50">
           <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors border border-transparent hover:border-gray-200/60">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-full border border-blue-600 text-blue-600 bg-white text-xs font-bold flex items-center justify-center shrink-0 shadow-2xs">
-                A
+              <div className="w-9 h-9 rounded-full bg-blue-50 border border-blue-200/80 text-blue-600 flex items-center justify-center shrink-0 shadow-2xs">
+                <User size={18} />
               </div>
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate leading-snug">Admin Gym</p>
