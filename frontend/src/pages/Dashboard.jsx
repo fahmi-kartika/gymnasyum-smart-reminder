@@ -217,6 +217,7 @@ export default function Dashboard() {
   const scheduledCount = todaysReminders.filter(r => r.status === 'Scheduled').length;
   const sentCount = todaysReminders.filter(r => r.status === 'Sent').length;
   const respondedCount = todaysReminders.filter(r => r.status === 'Responded').length;
+  const noResponseCount = todaysReminders.filter(r => r.status === 'No Response').length;
 
   return (
     <div className="space-y-6">
@@ -386,8 +387,8 @@ export default function Dashboard() {
         </Dialog>
       </div>
 
-      {/* 4 Kartu Statistik Bergaya Shadcn */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      {/* 5 Kartu Statistik Bergaya Shadcn */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
         {/* Card 1 */}
         <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
           <CardHeader className="pb-2">
@@ -444,6 +445,21 @@ export default function Dashboard() {
             </div>
             <p className="text-[11px] text-gray-500 pt-1">
               Member terkonfirmasi hadir kelas
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Card 5 */}
+        <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
+          <CardHeader className="pb-2">
+            <span className="text-xs font-semibold text-gray-500">Tidak Ada Respons</span>
+          </CardHeader>
+          <CardContent className="space-y-1">
+            <div className="text-3xl font-extrabold tracking-tight text-red-600">
+              {loading ? <Skeleton className="h-9 w-16" /> : noResponseCount}
+            </div>
+            <p className="text-[11px] text-gray-500 pt-1">
+              Member belum / tidak merespons
             </p>
           </CardContent>
         </Card>
@@ -504,6 +520,16 @@ export default function Dashboard() {
               }`}
             >
               Responded ({respondedCount})
+            </button>
+            <button
+              onClick={() => { setStatusFilter('No Response'); setCurrentPage(1); }}
+              className={`px-2.5 py-1 rounded-md transition ${
+                statusFilter === 'No Response'
+                  ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                  : 'text-gray-500 hover:text-gray-900'
+              }`}
+            >
+              No Response ({noResponseCount})
             </button>
           </div>
         </CardHeader>
