@@ -573,14 +573,14 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table className="table-fixed w-full min-w-[720px]">
+              <Table className="table-fixed w-full min-w-[760px]">
                 <TableHeader>
                   <TableRow className="border-b border-gray-100 bg-gray-50/50">
-                    <TableHead className="w-[24%] text-xs font-semibold text-gray-500 pl-6">Member</TableHead>
-                    <TableHead className="w-[26%] text-xs font-semibold text-gray-500">Kelas &amp; Jam</TableHead>
-                    <TableHead className="w-[14%] text-xs font-semibold text-gray-500">Prioritas</TableHead>
-                    <TableHead className="w-[23%] text-xs font-semibold text-gray-500">Status Interaksi</TableHead>
-                    <TableHead className="w-[13%] text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
+                    <TableHead className="w-[23%] text-xs font-semibold text-gray-500 pl-6">Member</TableHead>
+                    <TableHead className="w-[25%] text-xs font-semibold text-gray-500">Kelas &amp; Jam</TableHead>
+                    <TableHead className="w-[12%] text-xs font-semibold text-gray-500">Prioritas</TableHead>
+                    <TableHead className="w-[22%] text-xs font-semibold text-gray-500">Status Interaksi</TableHead>
+                    <TableHead className="w-[18%] text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
