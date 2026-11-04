@@ -32,10 +32,8 @@ export default function Layout({ children }) {
     <div className="flex h-screen bg-[#fafafa] font-sans flex-col md:flex-row text-gray-900 antialiased">
       {/* Header Mobile */}
       <header className="md:hidden flex items-center justify-between px-5 h-16 bg-white border-b border-gray-200 shrink-0">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
-            <Dumbbell className="h-4.5 w-4.5" />
-          </div>
+        <div className="flex items-center gap-2.5">
+          <Dumbbell className="h-5 w-5 text-blue-600 shrink-0" />
           <div className="flex flex-col">
             <span className="text-base font-bold tracking-tight leading-tight">Gymnasyum</span>
             <span className="text-[11px] text-blue-600 font-medium">Smart Reminder</span>
@@ -69,10 +67,8 @@ export default function Layout({ children }) {
         <div className="flex flex-col">
           {/* Logo & Judul Brand */}
           <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
-                <Dumbbell className="h-4.5 w-4.5" />
-              </div>
+            <div className="flex items-center gap-2.5">
+              <Dumbbell className="h-6 w-6 text-blue-600 shrink-0" />
               <div className="flex flex-col">
                 <span className="text-base font-bold tracking-tight leading-tight">Gymnasyum</span>
                 <span className="text-xs text-blue-600 font-medium">Smart Reminder</span>
@@ -123,7 +119,7 @@ export default function Layout({ children }) {
         <div className="p-3.5 border-t border-gray-100 bg-gray-50/50">
           <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors border border-transparent hover:border-gray-200/60">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-9 h-9 rounded-full border border-blue-600 text-blue-600 bg-white text-xs font-bold flex items-center justify-center shrink-0 shadow-2xs">
                 A
               </div>
               <div className="min-w-0">
