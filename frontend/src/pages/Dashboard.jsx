@@ -143,7 +143,37 @@ export default function Dashboard() {
     const formattedPhone = reminder.whatsapp_number.startsWith('0')
       ? '62' + reminder.whatsapp_number.substring(1)
       : reminder.whatsapp_number;
-    const message = `Halo ${reminder.customer_name}, ini dari Gymnasyum! Mengingatkan untuk jadwal kelas ${reminder.class_name} Anda hari ini. Apakah Anda akan hadir?`;
+
+    const schedule = schedules.find(s => s.id === reminder.schedule_id);
+    const classTime = reminder.class_time || schedule?.class_time;
+    const instructorName = reminder.instructor_name || schedule?.instructor_name || '-';
+
+    const formattedDate = classTime
+      ? new Date(classTime).toLocaleDateString('id-ID', {
+          weekday: 'long',
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric'
+        })
+      : 'hari ini';
+
+    const formattedTime = classTime
+      ? new Date(classTime).toLocaleTimeString('id-ID', {
+          hour: '2-digit',
+          minute: '2-digit'
+        }) + ' WIB'
+      : '-';
+
+    const message = `Halo ${reminder.customer_name}, ini dari Gymnasyum!
+
+Mengingatkan untuk jadwal sesi kelas latihan Anda:
+• Kelas: ${reminder.class_name}
+• Hari/Tanggal: ${formattedDate}
+• Pukul: ${formattedTime}
+• Instruktur: ${instructorName}
+
+Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfirmasi kehadiran. Terima kasih!`;
+
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
 
     if (reminder.status === 'Scheduled') {
