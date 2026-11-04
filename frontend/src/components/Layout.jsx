@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { Link, useLocation, Outlet } from 'react-router-dom';
-import { LayoutDashboard, Users, CalendarClock, Dumbbell, Menu, X } from 'lucide-react';
+import { Link, useLocation, useNavigate, Outlet } from 'react-router-dom';
+import { LayoutDashboard, Users, CalendarClock, Dumbbell, Menu, X, LogOut } from 'lucide-react';
 
 export default function Layout({ children }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
 
   // Daftar menu navigasi
   const menuItems = [
@@ -12,6 +13,12 @@ export default function Layout({ children }) {
     { path: '/customers', label: 'Member', icon: Users },
     { path: '/schedules', label: 'Jadwal Kelas', icon: CalendarClock },
   ];
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('admin_user');
+    navigate('/login');
+  };
 
   return (
     <div className="flex h-screen bg-gray-50 font-sans flex-col md:flex-row">
@@ -85,16 +92,26 @@ export default function Layout({ children }) {
           })}
         </nav>
 
-        {/* Profil Admin Singkat */}
+        {/* Profil Admin & Tombol Logout */}
         <div className="p-4 border-t border-gray-200">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
-              A
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold">
+                A
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-900">Admin Gym</p>
+                <p className="text-xs text-gray-500">Administrator</p>
+              </div>
             </div>
-            <div>
-              <p className="text-sm font-medium text-gray-900">Admin Gym</p>
-              <p className="text-xs text-gray-500">Administrator</p>
-            </div>
+            <button
+              type="button"
+              onClick={handleLogout}
+              className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+              title="Keluar dari akun"
+            >
+              <LogOut size={18} />
+            </button>
           </div>
         </div>
       </aside>
