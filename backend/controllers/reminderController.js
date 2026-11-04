@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 const Joi = require('joi');
 
-// 1. Mengambil data reminder dengan opsi filter status, priority, atau tanggal kelas (GET)
+// 1. Mengambil data reminder dengan opsi filter status, priority, tanggal kelas, atau customer_id (GET)
 const getAllReminders = async (req, res) => {
   try {
     const { status, priority, date, customer_id } = req.query;
@@ -68,7 +68,6 @@ const getAllReminders = async (req, res) => {
 
 // 2. Membuat reminder baru (Otomatisasi Penentuan Prioritas) (POST)
 const createReminder = async (req, res) => {
-  // Validasi Joi HANYA mensyaratkan customer_id dan schedule_id (priority dihapus dari req.body)
   const schema = Joi.object({
     customer_id: Joi.number().integer().required().messages({
       'number.base': 'ID pelanggan harus berupa angka',
@@ -87,10 +86,10 @@ const createReminder = async (req, res) => {
 
   try {
     const { customer_id, schedule_id } = req.body;
-    let computedPriority = 'Medium'; // Default awal
+    let computedPriority = 'Medium'; // Nilai standar awal
 
-    // Pastikan customer dan schedule benar-benar ada
-    const customerCheck = await pool.query('SELECT id, member_type FROM customers WHERE id = $1', [customer_id]);
+    // Memastikan customer dan schedule terdaftar di database
+    const customerCheck = await pool.query('SELECT id FROM customers WHERE id = $1', [customer_id]);
     if (customerCheck.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Pelanggan tidak ditemukan' });
     }
@@ -100,39 +99,30 @@ const createReminder = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Jadwal kelas tidak ditemukan' });
     }
 
-    // LOGIKA USE CASE: AI/Rule-based Klasifikasi Prioritas Otomatis
-    const customerData = customerCheck.rows[0];
+    // Klasifikasi prioritas otomatis murni berbasis riwayat respons reminder sebelumnya
+    const historyQuery = await pool.query(
+      'SELECT status FROM reminders WHERE customer_id = $1 AND status != $2 ORDER BY created_at DESC LIMIT 10',
+      [customer_id, 'Scheduled']
+    );
     
-    // Syarat 1: Jika member tipe VIP, otomatis High
-    if (customerData.member_type && customerData.member_type.toUpperCase() === 'VIP') {
-      computedPriority = 'High';
-    } else {
-      // Syarat 2: Cek SELURUH histori interaksi
-      const historyQuery = await pool.query(
-        'SELECT status FROM reminders WHERE customer_id = $1 AND status != $2 ORDER BY created_at DESC LIMIT 10',
-        [customer_id, 'Scheduled']
-      );
-      
-      const history = historyQuery.rows;
-      if (history.length > 0) {
-        const noResponseCount = history.filter(h => h.status === 'No Response').length;
-        const respondedCount = history.filter(h => h.status === 'Responded').length;
+    const history = historyQuery.rows;
+    if (history.length > 0) {
+      const noResponseCount = history.filter(h => h.status === 'No Response').length;
+      const respondedCount = history.filter(h => h.status === 'Responded').length;
 
-        // Logika Klasifikasi yang Lebih Akurat & Adil:
-        if (respondedCount > noResponseCount) {
-           // Mayoritas membalas -> Aman
-           computedPriority = 'Low'; 
-        } else if (noResponseCount > respondedCount) {
-           // Mayoritas mengabaikan -> Bahaya
-           computedPriority = 'High'; 
-        } else {
-           // Jumlah seri (seimbang 1-1, 2-2, 3-3, dst) -> Netral
-           computedPriority = 'Medium';
-        }
+      if (noResponseCount > respondedCount) {
+        // Mayoritas mengabaikan reminder -> prioritas tinggi untuk difollow-up
+        computedPriority = 'High';
+      } else if (respondedCount > noResponseCount) {
+        // Mayoritas merespons/konfirmasi kehadiran -> prioritas rendah
+        computedPriority = 'Low';
+      } else {
+        // Jumlah seimbang -> prioritas sedang
+        computedPriority = 'Medium';
       }
     }
 
-    // Insert ke tabel menggunakan priority hasil komputasi (bukan input user)
+    // Simpan reminder baru dengan prioritas hasil evaluasi sistem
     const result = await pool.query(
       'INSERT INTO reminders (customer_id, schedule_id, priority, status) VALUES ($1, $2, $3, $4) RETURNING *',
       [customer_id, schedule_id, computedPriority, 'Scheduled']
