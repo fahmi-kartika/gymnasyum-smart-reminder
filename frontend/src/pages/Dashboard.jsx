@@ -220,12 +220,9 @@ export default function Dashboard() {
                   <SelectContent position="popper" className="max-h-56">
                     {customers.map(c => (
                       <SelectItem key={c.id} value={c.id.toString()}>
-                        <div className="flex items-center gap-2 text-xs">
-                          <span className="font-medium text-gray-900">{c.name}</span>
-                          {c.whatsapp_number && (
-                            <span className="text-gray-400">({c.whatsapp_number})</span>
-                          )}
-                        </div>
+                        <span className="text-xs">
+                          {c.name} {c.whatsapp_number ? `(${c.whatsapp_number})` : ''}
+                        </span>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -252,13 +249,13 @@ export default function Dashboard() {
                     ) : (
                       availableSchedules.map(s => (
                         <SelectItem key={s.id} value={s.id.toString()}>
-                          <div className="flex items-center gap-2 text-xs py-0.5">
+                          <span className="text-xs">
                             <span className="font-semibold text-gray-900">{s.class_name}</span>
-                            <span className="text-gray-300">•</span>
+                            {' - '}
                             <span className="text-gray-600">
-                              {new Date(s.class_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}, {new Date(s.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                              {new Date(s.class_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} ({new Date(s.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB)
                             </span>
-                          </div>
+                          </span>
                         </SelectItem>
                       ))
                     )}
