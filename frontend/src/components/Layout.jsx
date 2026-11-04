@@ -33,10 +33,13 @@ export default function Layout({ children }) {
       {/* Header Mobile */}
       <header className="md:hidden flex items-center justify-between px-5 h-16 bg-white border-b border-gray-200 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center">
+          <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
             <Dumbbell className="h-4.5 w-4.5" />
           </div>
-          <span className="text-base font-bold tracking-tight">Gymnasyum</span>
+          <div className="flex flex-col">
+            <span className="text-base font-bold tracking-tight leading-tight">Gymnasyum</span>
+            <span className="text-[11px] text-blue-600 font-medium">Smart Reminder</span>
+          </div>
         </div>
         <button
           type="button"
@@ -67,12 +70,12 @@ export default function Layout({ children }) {
           {/* Logo & Judul Brand */}
           <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100">
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-black text-white flex items-center justify-center shadow-2xs">
+              <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs">
                 <Dumbbell className="h-4.5 w-4.5" />
               </div>
               <div className="flex flex-col">
                 <span className="text-base font-bold tracking-tight leading-tight">Gymnasyum</span>
-                <span className="text-xs text-gray-400 font-medium">Smart Reminder</span>
+                <span className="text-xs text-blue-600 font-medium">Smart Reminder</span>
               </div>
             </div>
             <button
@@ -102,11 +105,11 @@ export default function Layout({ children }) {
                       onClick={() => setMobileMenuOpen(false)}
                       className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all ${
                         isActive
-                          ? 'bg-gray-100 text-gray-900 font-semibold shadow-2xs'
+                          ? 'bg-blue-50 text-blue-700 font-semibold shadow-2xs'
                           : 'text-gray-500 hover:text-gray-900 hover:bg-gray-50'
                       }`}
                     >
-                      <Icon size={19} className={isActive ? 'text-gray-900' : 'text-gray-400'} />
+                      <Icon size={19} className={isActive ? 'text-blue-600' : 'text-gray-400'} />
                       <span>{item.label}</span>
                     </Link>
                   );
@@ -120,7 +123,7 @@ export default function Layout({ children }) {
         <div className="p-3.5 border-t border-gray-100 bg-gray-50/50">
           <div className="flex items-center justify-between p-2 rounded-lg hover:bg-white transition-colors border border-transparent hover:border-gray-200/60">
             <div className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-full bg-black text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-2xs">
+              <div className="w-9 h-9 rounded-full bg-blue-600 text-white text-xs font-bold flex items-center justify-center shrink-0 shadow-2xs">
                 A
               </div>
               <div className="min-w-0">

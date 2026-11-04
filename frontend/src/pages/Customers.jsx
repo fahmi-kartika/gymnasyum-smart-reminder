@@ -188,7 +188,7 @@ export default function Customers() {
 
         <button
           onClick={handleAddClick}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-black text-white hover:bg-gray-800 text-xs font-semibold shadow-xs transition"
+          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-xs font-semibold shadow-xs transition"
         >
           <Plus size={15} />
           <span>Tambah Member</span>
@@ -284,7 +284,7 @@ export default function Customers() {
                   type="submit"
                   size="sm"
                   disabled={isSubmitting}
-                  className="h-8 px-3.5 text-xs font-semibold rounded-lg bg-black text-white hover:bg-gray-800 shadow-2xs"
+                  className="h-8 px-3.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-2xs"
                 >
                   {isSubmitting ? 'Menyimpan...' : 'Simpan Data'}
                 </Button>
