@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Edit, Trash2 } from 'lucide-react';
+import { Plus, Edit, Trash2, History } from 'lucide-react';
 import API from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -21,6 +21,11 @@ export default function Customers() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editId, setEditId] = useState(null);
+
+  // LOGIKA USE CASE: State untuk Modal Riwayat Customer
+  const [historyDialogOpen, setHistoryDialogOpen] = useState(false);
+  const [selectedHistory, setSelectedHistory] = useState([]);
+  const [activeCustomer, setActiveCustomer] = useState(null);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -53,7 +58,6 @@ export default function Customers() {
     setFormData((prev) => ({ ...prev, member_type: value }));
   };
 
-  // Membuka form untuk TAMBAH data
   const handleAddClick = () => {
     setIsEditMode(false);
     setEditId(null);
@@ -61,7 +65,6 @@ export default function Customers() {
     setIsDialogOpen(true);
   };
 
-  // Membuka form untuk EDIT data (isi form otomatis dari data tabel)
   const handleEditClick = (customer) => {
     setIsEditMode(true);
     setEditId(customer.id);
@@ -74,7 +77,20 @@ export default function Customers() {
     setIsDialogOpen(true);
   };
 
-  // Eksekusi API (bisa POST atau PUT tergantung mode)
+  // LOGIKA USE CASE: Fungsi tarik data riwayat reminder per customer
+  const handleViewHistory = async (customer) => {
+    setActiveCustomer(customer);
+    setHistoryDialogOpen(true);
+    try {
+      const res = await API.get('/reminders');
+      const allReminders = res.data.data || res.data;
+      const custHistory = allReminders.filter(r => r.customer_id === customer.id);
+      setSelectedHistory(custHistory);
+    } catch (error) {
+      console.error('Gagal mengambil riwayat:', error);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -119,6 +135,7 @@ export default function Customers() {
           Tambah Member
         </Button>
 
+        {/* Dialog Form Tambah/Edit */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -165,6 +182,51 @@ export default function Customers() {
             </form>
           </DialogContent>
         </Dialog>
+
+        {/* LOGIKA USE CASE: Dialog Riwayat Reminder */}
+        <Dialog open={historyDialogOpen} onOpenChange={setHistoryDialogOpen}>
+          <DialogContent className="sm:max-w-[600px]">
+            <DialogHeader>
+              <DialogTitle>Riwayat Follow-up: {activeCustomer?.name}</DialogTitle>
+            </DialogHeader>
+            <div className="max-h-[300px] overflow-y-auto mt-4">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Kelas</TableHead>
+                    <TableHead>Tanggal</TableHead>
+                    <TableHead>Prioritas</TableHead>
+                    <TableHead>Status Terakhir</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {selectedHistory.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-6 text-gray-500">Belum ada riwayat reminder terdaftar.</TableCell>
+                    </TableRow>
+                  ) : (
+                    selectedHistory.map((hist) => (
+                      <TableRow key={hist.id}>
+                        <TableCell className="font-medium">{hist.class_name}</TableCell>
+                        <TableCell>{hist.class_time ? new Date(hist.class_time).toLocaleDateString('id-ID') : '-'}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className={
+                            hist.priority?.toLowerCase() === 'high' ? 'text-red-600 bg-red-50' : 
+                            hist.priority?.toLowerCase() === 'medium' ? 'text-yellow-600 bg-yellow-50' : 
+                            'text-green-600 bg-green-50'
+                          }>
+                            {hist.priority?.toUpperCase()}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>{hist.status}</TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <Card>
@@ -209,6 +271,14 @@ export default function Customers() {
                         <TableCell className="max-w-[200px] truncate">{customer.preferences || '-'}</TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-2">
+                            <Button 
+                              variant="outline" size="icon" 
+                              className="h-8 w-8 text-gray-600 border-gray-200 hover:bg-gray-50"
+                              onClick={() => handleViewHistory(customer)}
+                              title="Lihat Riwayat"
+                            >
+                              <History size={16} />
+                            </Button>
                             <Button 
                               variant="outline" size="icon" 
                               className="h-8 w-8 text-blue-600 border-blue-200 hover:bg-blue-50"

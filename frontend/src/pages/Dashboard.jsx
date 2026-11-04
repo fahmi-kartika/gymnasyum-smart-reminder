@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { MessageCircle, Activity, Clock, Send, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import API from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -19,10 +19,11 @@ export default function Dashboard() {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // LOGIKA BARU: Input form hanya membutuhkan relasi member dan kelas
   const [formData, setFormData] = useState({
     customer_id: '',
-    schedule_id: '',
-    priority: 'Medium'
+    schedule_id: ''
   });
 
   useEffect(() => {
@@ -48,22 +49,37 @@ export default function Dashboard() {
     fetchData();
   }, [refreshTrigger]);
 
-  // UPDATE KUNCI: Fungsi ini sekarang Async dan menerima seluruh objek reminder
+  const todaysReminders = useMemo(() => {
+    const todayStr = new Date().toLocaleDateString('en-CA');
+    
+    const filtered = reminders.filter(r => {
+      const schedule = schedules.find(s => s.id === r.schedule_id);
+      const classTime = r.class_time || schedule?.class_time;
+      if (!classTime) return false;
+      return new Date(classTime).toLocaleDateString('en-CA') === todayStr;
+    });
+
+    const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
+    return filtered.sort((a, b) => {
+      const weightA = priorityWeight[a.priority] || 0;
+      const weightB = priorityWeight[b.priority] || 0;
+      return weightB - weightA; 
+    });
+  }, [reminders, schedules]);
+
   const handleWhatsApp = async (reminder) => {
     if (!reminder.whatsapp_number) return;
     
-    // 1. Buka Tab WhatsApp
     let formattedPhone = reminder.whatsapp_number.startsWith('0') ? '62' + reminder.whatsapp_number.substring(1) : reminder.whatsapp_number;
-    const message = `Halo ${reminder.customer_name}, ini dari Gymnasyum! Mengingatkan untuk jadwal kelas ${reminder.class_name} Anda. Apakah Anda akan hadir?`;
+    const message = `Halo ${reminder.customer_name}, ini dari Gymnasyum! Mengingatkan untuk jadwal kelas ${reminder.class_name} Anda hari ini. Apakah Anda akan hadir?`;
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
 
-    // 2. Otomatis ubah status menjadi "Sent" jika saat ini masih "Scheduled"
     if (reminder.status === 'Scheduled') {
       try {
         await API.patch(`/reminders/${reminder.id}/status`, { status: 'Sent' });
-        setRefreshTrigger(prev => prev + 1); // Muat ulang data agar tabel & statistik terupdate
+        setRefreshTrigger(prev => prev + 1); 
       } catch (error) {
-        console.error('Gagal mengupdate status otomatis ke Sent:', error);
+        console.error('Gagal mengupdate status:', error);
       }
     }
   };
@@ -73,13 +89,13 @@ export default function Dashboard() {
       await API.patch(`/reminders/${id}/status`, { status: newStatus });
       setRefreshTrigger(prev => prev + 1); 
     } catch (error) {
-      const errorMessage = error.response?.data?.message || error.message;
-      alert(`Gagal mengubah status: ${errorMessage}`);
+      console.error(error); 
+      alert('Gagal mengubah status');
     }
   };
 
   const handleAddClick = () => {
-    setFormData({ customer_id: '', schedule_id: '', priority: 'Medium' });
+    setFormData({ customer_id: '', schedule_id: '' });
     setIsDialogOpen(true);
   };
 
@@ -87,10 +103,10 @@ export default function Dashboard() {
     e.preventDefault();
     setIsSubmitting(true);
     
+    // Backend akan menghitung dan menetapkan prioritasnya berdasarkan riwayat.
     const payload = {
       customer_id: parseInt(formData.customer_id, 10),
-      schedule_id: parseInt(formData.schedule_id, 10),
-      priority: formData.priority
+      schedule_id: parseInt(formData.schedule_id, 10)
     };
 
     try {
@@ -111,34 +127,34 @@ export default function Dashboard() {
         await API.delete(`/reminders/${id}`);
         setRefreshTrigger(prev => prev + 1);
       } catch (error) {
-        console.error('Gagal menghapus reminder:', error);
-        alert('Gagal menghapus reminder. Pastikan backend mendukung endpoint DELETE ini.');
+        console.error(error);
+        alert('Gagal menghapus reminder.');
       }
     }
   };
 
-  const totalReminders = reminders.length;
-  const scheduledCount = reminders.filter(r => r.status === 'Scheduled').length;
-  const sentCount = reminders.filter(r => r.status === 'Sent').length;
-  const respondedCount = reminders.filter(r => r.status === 'Responded').length;
+  const totalReminders = todaysReminders.length;
+  const scheduledCount = todaysReminders.filter(r => r.status === 'Scheduled').length;
+  const sentCount = todaysReminders.filter(r => r.status === 'Sent').length;
+  const respondedCount = todaysReminders.filter(r => r.status === 'Responded').length;
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h2>
-          <p className="text-gray-500 mt-1">Pantau status follow-up member gym Anda.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard Follow-up</h2>
+          <p className="text-gray-500 mt-1">Antrean prioritas reminder jadwal kelas hari ini.</p>
         </div>
         
         <Button onClick={handleAddClick} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
           <Plus size={16} />
-          Buat Reminder
+          Booking Kelas
         </Button>
 
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Buat Reminder Baru</DialogTitle>
+              <DialogTitle>Booking Kelas untuk Member</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
@@ -167,18 +183,6 @@ export default function Dashboard() {
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="priority">Prioritas</Label>
-                <Select value={formData.priority} onValueChange={(val) => setFormData(prev => ({ ...prev, priority: val }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="High">High</SelectItem>
-                    <SelectItem value="Medium">Medium</SelectItem>
-                    <SelectItem value="Low">Low</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
               <div className="flex justify-end gap-2 pt-4">
                 <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Batal</Button>
                 <Button type="submit" disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700 text-white">
@@ -191,7 +195,7 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-gray-600">Total Reminder</CardTitle><Activity className="w-4 h-4 text-gray-400" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : totalReminders}</div></CardContent></Card>
+        <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-gray-600">Total Hari Ini</CardTitle><Activity className="w-4 h-4 text-gray-400" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : totalReminders}</div></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-orange-600">Belum Difollow-up</CardTitle><Clock className="w-4 h-4 text-orange-400" /></CardHeader><CardContent><div className="text-2xl font-bold text-orange-600">{loading ? <Skeleton className="h-8 w-16" /> : scheduledCount}</div></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-blue-600">Pesan Terkirim</CardTitle><Send className="w-4 h-4 text-blue-400" /></CardHeader><CardContent><div className="text-2xl font-bold text-blue-600">{loading ? <Skeleton className="h-8 w-16" /> : sentCount}</div></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-green-600">Sudah Merespons</CardTitle><CheckCircle className="w-4 h-4 text-green-400" /></CardHeader><CardContent><div className="text-2xl font-bold text-green-600">{loading ? <Skeleton className="h-8 w-16" /> : respondedCount}</div></CardContent></Card>
@@ -199,7 +203,7 @@ export default function Dashboard() {
 
       <Card>
         <CardHeader>
-          <CardTitle>Daftar Reminder Hari Ini</CardTitle>
+          <CardTitle>Antrean Follow-up Hari Ini</CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -222,12 +226,12 @@ export default function Dashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {reminders.length === 0 ? (
+                  {todaysReminders.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-6 text-gray-500">Belum ada data reminder.</TableCell>
+                      <TableCell colSpan={5} className="text-center py-6 text-gray-500">Tidak ada antrean reminder kelas untuk hari ini.</TableCell>
                     </TableRow>
                   ) : (
-                    reminders.map((reminder) => (
+                    todaysReminders.map((reminder) => (
                       <TableRow key={reminder.id}>
                         <TableCell className="font-medium">{reminder.customer_name}</TableCell>
                         <TableCell>{reminder.class_name}</TableCell>
