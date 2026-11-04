@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, Activity, Clock, Send, CheckCircle } from 'lucide-react';
 import API from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -38,22 +38,68 @@ export default function Dashboard() {
 
   const handleStatusChange = async (id, newStatus) => {
     try {
-      // Endpoint PATCH disesuaikan dengan Swagger: /reminders/{id}/status
       await API.patch(`/reminders/${id}/status`, { status: newStatus });
       setRefreshTrigger(prev => prev + 1); 
     } catch (error) {
-      // Menangkap pesan error spesifik dari backend Express
       const errorMessage = error.response?.data?.message || error.response?.data?.error || error.message;
-      console.error('Detail Error Backend:', error.response?.data);
       alert(`Gagal mengubah status: ${errorMessage}`);
     }
   };
+
+  // Kalkulasi data untuk kartu statistik
+  const totalReminders = reminders.length;
+  const scheduledCount = reminders.filter(r => r.status === 'Scheduled').length;
+  const sentCount = reminders.filter(r => r.status === 'Sent').length;
+  const respondedCount = reminders.filter(r => r.status === 'Responded').length;
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-3xl font-bold tracking-tight text-gray-900">Dashboard</h2>
         <p className="text-gray-500 mt-1">Pantau status follow-up member gym Anda.</p>
+      </div>
+
+      {/* Grid Kartu Statistik */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-gray-600">Total Reminder</CardTitle>
+            <Activity className="w-4 h-4 text-gray-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalReminders}</div>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-orange-600">Belum Difollow-up</CardTitle>
+            <Clock className="w-4 h-4 text-orange-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{scheduledCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-blue-600">Pesan Terkirim</CardTitle>
+            <Send className="w-4 h-4 text-blue-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">{sentCount}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+            <CardTitle className="text-sm font-medium text-green-600">Sudah Merespons</CardTitle>
+            <CheckCircle className="w-4 h-4 text-green-400" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-600">{respondedCount}</div>
+          </CardContent>
+        </Card>
       </div>
 
       <Card>
