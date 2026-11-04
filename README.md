@@ -1,5 +1,5 @@
 # Gymnasyum Smart Reminder 🏋️‍♂️📲
-**Sistem Manajemen Jadwal & Follow-up Pelanggan Berbasis Web**  
+**Sistem Manajemen Reminder & Follow-up Pelanggan Berbasis Web**  
 *Dicoding Capstone Project - ID: DB15-I020*
 
 ---

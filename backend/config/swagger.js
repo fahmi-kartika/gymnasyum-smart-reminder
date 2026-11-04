@@ -6,7 +6,7 @@ const options = {
     info: {
       title: 'Gymnasyum Smart Reminder API',
       version: '1.0.0',
-      description: 'Dokumentasi RESTful API untuk Sistem Manajemen Jadwal dan Follow-up Pelanggan Gymnasyum',
+      description: 'Dokumentasi RESTful API untuk Sistem Manajemen Reminder dan Follow-up Pelanggan Gymnasyum',
     },
     servers: [
       {
