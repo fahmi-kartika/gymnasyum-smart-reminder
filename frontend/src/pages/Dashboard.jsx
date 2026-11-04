@@ -17,7 +17,6 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // State untuk form Tambah Reminder
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
@@ -30,7 +29,6 @@ export default function Dashboard() {
     const fetchData = async () => {
       setLoading(true);
       try {
-        // Mengambil semua data secara paralel agar lebih cepat
         const [remindersRes, customersRes, schedulesRes] = await Promise.all([
           API.get('/reminders'),
           API.get('/customers'),
@@ -50,11 +48,24 @@ export default function Dashboard() {
     fetchData();
   }, [refreshTrigger]);
 
-  const handleWhatsApp = (phone, customerName, className) => {
-    if (!phone) return;
-    let formattedPhone = phone.startsWith('0') ? '62' + phone.substring(1) : phone;
-    const message = `Halo ${customerName}, ini dari Gymnasyum! Mengingatkan untuk jadwal kelas ${className} Anda. Apakah Anda akan hadir?`;
+  // UPDATE KUNCI: Fungsi ini sekarang Async dan menerima seluruh objek reminder
+  const handleWhatsApp = async (reminder) => {
+    if (!reminder.whatsapp_number) return;
+    
+    // 1. Buka Tab WhatsApp
+    let formattedPhone = reminder.whatsapp_number.startsWith('0') ? '62' + reminder.whatsapp_number.substring(1) : reminder.whatsapp_number;
+    const message = `Halo ${reminder.customer_name}, ini dari Gymnasyum! Mengingatkan untuk jadwal kelas ${reminder.class_name} Anda. Apakah Anda akan hadir?`;
     window.open(`https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`, '_blank');
+
+    // 2. Otomatis ubah status menjadi "Sent" jika saat ini masih "Scheduled"
+    if (reminder.status === 'Scheduled') {
+      try {
+        await API.patch(`/reminders/${reminder.id}/status`, { status: 'Sent' });
+        setRefreshTrigger(prev => prev + 1); // Muat ulang data agar tabel & statistik terupdate
+      } catch (error) {
+        console.error('Gagal mengupdate status otomatis ke Sent:', error);
+      }
+    }
   };
 
   const handleStatusChange = async (id, newStatus) => {
@@ -67,19 +78,6 @@ export default function Dashboard() {
     }
   };
 
-  const handleDelete = async (id, customerName) => {
-  if (window.confirm(`Apakah Anda yakin ingin menghapus reminder untuk ${customerName}?`)) {
-    try {
-      await API.delete(`/reminders/${id}`);
-      setRefreshTrigger(prev => prev + 1);
-    } catch (error) {
-      console.error('Gagal menghapus reminder:', error);
-      alert('Gagal menghapus reminder. Pastikan backend mendukung endpoint DELETE ini.');
-    }
-  }
-};
-
-  // Logika form Tambah Reminder
   const handleAddClick = () => {
     setFormData({ customer_id: '', schedule_id: '', priority: 'Medium' });
     setIsDialogOpen(true);
@@ -89,7 +87,6 @@ export default function Dashboard() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Konversi string ID dari Select menjadi Integer sesuai permintaan backend
     const payload = {
       customer_id: parseInt(formData.customer_id, 10),
       schedule_id: parseInt(formData.schedule_id, 10),
@@ -108,6 +105,18 @@ export default function Dashboard() {
     }
   };
 
+  const handleDelete = async (id, customerName) => {
+    if (window.confirm(`Apakah Anda yakin ingin menghapus reminder untuk ${customerName}?`)) {
+      try {
+        await API.delete(`/reminders/${id}`);
+        setRefreshTrigger(prev => prev + 1);
+      } catch (error) {
+        console.error('Gagal menghapus reminder:', error);
+        alert('Gagal menghapus reminder. Pastikan backend mendukung endpoint DELETE ini.');
+      }
+    }
+  };
+
   const totalReminders = reminders.length;
   const scheduledCount = reminders.filter(r => r.status === 'Scheduled').length;
   const sentCount = reminders.filter(r => r.status === 'Sent').length;
@@ -121,13 +130,11 @@ export default function Dashboard() {
           <p className="text-gray-500 mt-1">Pantau status follow-up member gym Anda.</p>
         </div>
         
-        {/* Tombol Tambah Reminder */}
         <Button onClick={handleAddClick} className="bg-blue-600 hover:bg-blue-700 text-white flex items-center gap-2">
           <Plus size={16} />
           Buat Reminder
         </Button>
 
-        {/* Dialog Form Tambah Reminder */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
@@ -136,11 +143,7 @@ export default function Dashboard() {
             <form onSubmit={handleSubmit} className="space-y-4 mt-4">
               <div className="space-y-2">
                 <Label htmlFor="customer">Member</Label>
-                <Select 
-                  value={formData.customer_id} 
-                  onValueChange={(val) => setFormData(prev => ({ ...prev, customer_id: val }))}
-                  required
-                >
+                <Select value={formData.customer_id} onValueChange={(val) => setFormData(prev => ({ ...prev, customer_id: val }))} required>
                   <SelectTrigger><SelectValue placeholder="Pilih Member" /></SelectTrigger>
                   <SelectContent>
                     {customers.map(c => (
@@ -152,11 +155,7 @@ export default function Dashboard() {
               
               <div className="space-y-2">
                 <Label htmlFor="schedule">Jadwal Kelas</Label>
-                <Select 
-                  value={formData.schedule_id} 
-                  onValueChange={(val) => setFormData(prev => ({ ...prev, schedule_id: val }))}
-                  required
-                >
+                <Select value={formData.schedule_id} onValueChange={(val) => setFormData(prev => ({ ...prev, schedule_id: val }))} required>
                   <SelectTrigger><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
                   <SelectContent>
                     {schedules.map(s => (
@@ -170,10 +169,7 @@ export default function Dashboard() {
 
               <div className="space-y-2">
                 <Label htmlFor="priority">Prioritas</Label>
-                <Select 
-                  value={formData.priority} 
-                  onValueChange={(val) => setFormData(prev => ({ ...prev, priority: val }))}
-                >
+                <Select value={formData.priority} onValueChange={(val) => setFormData(prev => ({ ...prev, priority: val }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="High">High</SelectItem>
@@ -195,7 +191,6 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {/* ... Kartu statistik tetap sama ... */}
         <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-gray-600">Total Reminder</CardTitle><Activity className="w-4 h-4 text-gray-400" /></CardHeader><CardContent><div className="text-2xl font-bold">{loading ? <Skeleton className="h-8 w-16" /> : totalReminders}</div></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-orange-600">Belum Difollow-up</CardTitle><Clock className="w-4 h-4 text-orange-400" /></CardHeader><CardContent><div className="text-2xl font-bold text-orange-600">{loading ? <Skeleton className="h-8 w-16" /> : scheduledCount}</div></CardContent></Card>
         <Card><CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0"><CardTitle className="text-sm font-medium text-blue-600">Pesan Terkirim</CardTitle><Send className="w-4 h-4 text-blue-400" /></CardHeader><CardContent><div className="text-2xl font-bold text-blue-600">{loading ? <Skeleton className="h-8 w-16" /> : sentCount}</div></CardContent></Card>
@@ -209,7 +204,6 @@ export default function Dashboard() {
         <CardContent>
           {loading ? (
             <div className="space-y-3">
-              {/* Animasi Skeleton untuk Tabel */}
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-12 w-full" />
               <Skeleton className="h-12 w-full" />
@@ -248,7 +242,7 @@ export default function Dashboard() {
                         </TableCell>
                         <TableCell>
                           <Select 
-                            defaultValue={reminder.status || 'Scheduled'} 
+                            value={reminder.status || 'Scheduled'} 
                             onValueChange={(value) => handleStatusChange(reminder.id, value)}
                           >
                             <SelectTrigger className={`w-[130px] h-8 text-xs font-medium text-white border-0 ${
@@ -268,27 +262,27 @@ export default function Dashboard() {
                           </Select>
                         </TableCell>
                         <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button 
-                            size="sm" 
-                            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
-                            onClick={() => handleWhatsApp(reminder.whatsapp_number, reminder.customer_name, reminder.class_name)}
-                          >
-                            <MessageCircle size={16} />
-                            Follow Up
-                          </Button>
-
-                          <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="h-8 w-8 px-0 text-red-600 border-red-200 hover:bg-red-50"
-                            onClick={() => handleDelete(reminder.id, reminder.customer_name)}
-                            title="Hapus Reminder"
-                          >
-                            <Trash2 size={16} />
-                          </Button>
-                        </div>
-                      </TableCell>
+                          <div className="flex justify-end gap-2">
+                            <Button 
+                              size="sm" 
+                              className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                              onClick={() => handleWhatsApp(reminder)}
+                            >
+                              <MessageCircle size={16} />
+                              Follow Up
+                            </Button>
+                            
+                            <Button 
+                              variant="outline" 
+                              size="sm" 
+                              className="h-8 w-8 px-0 text-red-600 border-red-200 hover:bg-red-50"
+                              onClick={() => handleDelete(reminder.id, reminder.customer_name)}
+                              title="Hapus Reminder"
+                            >
+                              <Trash2 size={16} />
+                            </Button>
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
