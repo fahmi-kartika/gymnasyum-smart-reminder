@@ -86,6 +86,12 @@ export default function Customers() {
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
+    // Nomor WhatsApp hanya boleh menerima karakter angka
+    if (name === 'whatsapp_number') {
+      const numericOnly = value.replace(/\D/g, '');
+      setFormData((prev) => ({ ...prev, [name]: numericOnly }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -225,6 +231,8 @@ export default function Customers() {
                 <Input
                   id="whatsapp_number"
                   name="whatsapp_number"
+                  type="tel"
+                  inputMode="numeric"
                   value={formData.whatsapp_number}
                   onChange={handleInputChange}
                   placeholder="Contoh: 08123456789"

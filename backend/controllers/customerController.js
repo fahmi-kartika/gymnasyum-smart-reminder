@@ -19,8 +19,9 @@ const createCustomer = async (req, res) => {
       'string.empty': 'Nama tidak boleh kosong',
       'any.required': 'Nama wajib diisi'
     }),
-    whatsapp_number: Joi.string().required().messages({
+    whatsapp_number: Joi.string().pattern(/^[0-9]+$/).required().messages({
       'string.empty': 'Nomor WhatsApp tidak boleh kosong',
+      'string.pattern.base': 'Nomor WhatsApp hanya boleh berisi angka',
       'any.required': 'Nomor WhatsApp wajib diisi'
     }),
     member_type: Joi.string().allow('', null), // Boleh kosong
@@ -76,8 +77,9 @@ const updateCustomer = async (req, res) => {
       'string.empty': 'Nama tidak boleh kosong',
       'any.required': 'Nama wajib diisi'
     }),
-    whatsapp_number: Joi.string().required().messages({
+    whatsapp_number: Joi.string().pattern(/^[0-9]+$/).required().messages({
       'string.empty': 'Nomor WhatsApp tidak boleh kosong',
+      'string.pattern.base': 'Nomor WhatsApp hanya boleh berisi angka',
       'any.required': 'Nomor WhatsApp wajib diisi'
     }),
     member_type: Joi.string().allow('', null),
