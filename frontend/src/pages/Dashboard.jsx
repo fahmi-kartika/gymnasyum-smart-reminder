@@ -302,17 +302,17 @@ export default function Dashboard() {
         {/* Modal Konfirmasi Hapus Reminder Bergaya Shadcn */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent className="sm:max-w-[400px] p-6 rounded-xl border border-gray-200/90 shadow-lg bg-white">
-            <DialogHeader className="gap-1 pb-3 border-b border-gray-100">
+            <DialogHeader className="gap-1 pb-1">
               <DialogTitle className="text-base font-bold text-gray-900">
                 Hapus Antrean Reminder
               </DialogTitle>
-              <DialogDescription className="text-xs text-gray-500">
+              <DialogDescription className="text-xs text-gray-500 leading-relaxed">
                 Apakah Anda yakin ingin menghapus antrean reminder untuk member{' '}
                 <span className="font-semibold text-gray-900">{reminderToDelete?.customer_name}</span>? Tindakan ini tidak dapat dibatalkan.
               </DialogDescription>
             </DialogHeader>
 
-            <DialogFooter className="mt-5 pt-3 border-t border-gray-100 flex justify-end gap-2 bg-transparent">
+            <DialogFooter className="mt-4 pt-3 border-t border-gray-100 flex justify-end gap-2 bg-transparent">
               <Button
                 type="button"
                 variant="outline"
