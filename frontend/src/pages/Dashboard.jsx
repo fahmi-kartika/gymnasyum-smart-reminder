@@ -172,7 +172,6 @@ export default function Dashboard() {
   const scheduledCount = todaysReminders.filter(r => r.status === 'Scheduled').length;
   const sentCount = todaysReminders.filter(r => r.status === 'Sent').length;
   const respondedCount = todaysReminders.filter(r => r.status === 'Responded').length;
-  const responseRate = totalCount > 0 ? Math.round((respondedCount / totalCount) * 100) : 0;
 
   return (
     <div className="space-y-6">
