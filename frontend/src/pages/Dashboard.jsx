@@ -255,11 +255,8 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1 */}
         <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardHeader className="pb-2">
             <span className="text-xs font-semibold text-gray-500">Total Reminder Hari Ini</span>
-            <span className="text-[11px] font-semibold text-gray-700 bg-gray-100 px-2 py-0.5 rounded-full">
-              Jadwal Aktif
-            </span>
           </CardHeader>
           <CardContent className="space-y-1">
             <div className="text-3xl font-extrabold tracking-tight text-gray-900">
@@ -273,11 +270,8 @@ export default function Dashboard() {
 
         {/* Card 2 */}
         <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardHeader className="pb-2">
             <span className="text-xs font-semibold text-gray-500">Belum Difollow-up</span>
-            <span className="text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full">
-              Perlu Aksi
-            </span>
           </CardHeader>
           <CardContent className="space-y-1">
             <div className="text-3xl font-extrabold tracking-tight text-amber-600">
@@ -291,11 +285,8 @@ export default function Dashboard() {
 
         {/* Card 3 */}
         <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardHeader className="pb-2">
             <span className="text-xs font-semibold text-gray-500">Pesan Terkirim</span>
-            <span className="text-[11px] font-semibold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full">
-              Terkirim
-            </span>
           </CardHeader>
           <CardContent className="space-y-1">
             <div className="text-3xl font-extrabold tracking-tight text-blue-600">
@@ -309,11 +300,8 @@ export default function Dashboard() {
 
         {/* Card 4 */}
         <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
-          <CardHeader className="flex flex-row items-center justify-between pb-2 space-y-0">
+          <CardHeader className="pb-2">
             <span className="text-xs font-semibold text-gray-500">Tingkat Konfirmasi</span>
-            <span className="text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-              {responseRate}%
-            </span>
           </CardHeader>
           <CardContent className="space-y-1">
             <div className="text-3xl font-extrabold tracking-tight text-emerald-600">
