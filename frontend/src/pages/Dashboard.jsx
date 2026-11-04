@@ -20,7 +20,7 @@ export default function Dashboard() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  // LOGIKA BARU: Input form hanya membutuhkan relasi member dan kelas
+  // Relasi member dan kelas untuk booking reminder baru
   const [formData, setFormData] = useState({
     customer_id: '',
     schedule_id: ''
@@ -49,6 +49,7 @@ export default function Dashboard() {
     fetchData();
   }, [refreshTrigger]);
 
+  // Antrean reminder khusus untuk jadwal kelas hari ini
   const todaysReminders = useMemo(() => {
     const todayStr = new Date().toLocaleDateString('en-CA');
     
@@ -77,6 +78,17 @@ export default function Dashboard() {
       return weightB - weightA; 
     });
   }, [reminders, schedules]);
+
+  // Filter jadwal kelas aktif mulai dari hari ini ke depan (tidak menampilkan kelas kemarin)
+  const availableSchedules = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    return schedules.filter(s => {
+      if (!s.class_time) return false;
+      return new Date(s.class_time) >= today;
+    });
+  }, [schedules]);
 
   const handleWhatsApp = async (reminder) => {
     if (!reminder.whatsapp_number) return;
@@ -114,7 +126,6 @@ export default function Dashboard() {
     e.preventDefault();
     setIsSubmitting(true);
     
-    // Backend akan menghitung dan menetapkan prioritasnya berdasarkan riwayat.
     const payload = {
       customer_id: parseInt(formData.customer_id, 10),
       schedule_id: parseInt(formData.schedule_id, 10)
@@ -185,11 +196,17 @@ export default function Dashboard() {
                 <Select value={formData.schedule_id} onValueChange={(val) => setFormData(prev => ({ ...prev, schedule_id: val }))} required>
                   <SelectTrigger><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
                   <SelectContent>
-                    {schedules.map(s => (
-                      <SelectItem key={s.id} value={s.id.toString()}>
-                        {s.class_name} - {new Date(s.class_time).toLocaleDateString('id-ID')}
-                      </SelectItem>
-                    ))}
+                    {availableSchedules.length === 0 ? (
+                      <div className="p-3 text-xs text-gray-500 text-center">
+                        Tidak ada kelas aktif mulai hari ini ke depan. Silakan buat jadwal baru di menu Jadwal Kelas.
+                      </div>
+                    ) : (
+                      availableSchedules.map(s => (
+                        <SelectItem key={s.id} value={s.id.toString()}>
+                          {s.class_name} - {new Date(s.class_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} ({new Date(s.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB)
+                        </SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>
