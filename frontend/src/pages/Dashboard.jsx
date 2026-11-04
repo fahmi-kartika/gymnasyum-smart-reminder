@@ -27,6 +27,10 @@ export default function Dashboard() {
   // Tab filter status pada tabel
   const [statusFilter, setStatusFilter] = useState('All');
 
+  // State Pagination
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -97,30 +101,15 @@ export default function Dashboard() {
     return todaysReminders.filter(r => r.status === statusFilter);
   }, [todaysReminders, statusFilter]);
 
-  // State Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(10);
-
-  // Total Halaman
+  // Total Halaman dan Halaman Aman
   const totalPages = Math.max(1, Math.ceil(filteredReminders.length / pageSize));
-
-  // Reset / sesuaikan halaman aktif jika filter berubah atau data berkurang
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
-  }, [currentPage, totalPages]);
-
-  // Reset ke halaman 1 saat filter status berubah
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [statusFilter]);
+  const safeCurrentPage = Math.min(currentPage, totalPages);
 
   // Data yang ditampilkan di tabel pada halaman aktif
   const paginatedReminders = useMemo(() => {
-    const startIndex = (currentPage - 1) * pageSize;
+    const startIndex = (safeCurrentPage - 1) * pageSize;
     return filteredReminders.slice(startIndex, startIndex + pageSize);
-  }, [filteredReminders, currentPage, pageSize]);
+  }, [filteredReminders, safeCurrentPage, pageSize]);
 
   // Pilihan jadwal kelas aktif untuk modal booking
   const availableSchedules = useMemo(() => {
@@ -443,7 +432,7 @@ export default function Dashboard() {
           {/* Tab Filter Status */}
           <div className="flex flex-wrap items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-xs font-medium">
             <button
-              onClick={() => setStatusFilter('All')}
+              onClick={() => { setStatusFilter('All'); setCurrentPage(1); }}
               className={`px-2.5 py-1 rounded-md transition ${
                 statusFilter === 'All'
                   ? 'bg-white text-gray-900 shadow-2xs font-semibold'
@@ -453,7 +442,7 @@ export default function Dashboard() {
               Semua ({totalCount})
             </button>
             <button
-              onClick={() => setStatusFilter('Scheduled')}
+              onClick={() => { setStatusFilter('Scheduled'); setCurrentPage(1); }}
               className={`px-2.5 py-1 rounded-md transition ${
                 statusFilter === 'Scheduled'
                   ? 'bg-white text-gray-900 shadow-2xs font-semibold'
@@ -463,7 +452,7 @@ export default function Dashboard() {
               Scheduled ({scheduledCount})
             </button>
             <button
-              onClick={() => setStatusFilter('Sent')}
+              onClick={() => { setStatusFilter('Sent'); setCurrentPage(1); }}
               className={`px-2.5 py-1 rounded-md transition ${
                 statusFilter === 'Sent'
                   ? 'bg-white text-gray-900 shadow-2xs font-semibold'
@@ -473,7 +462,7 @@ export default function Dashboard() {
               Sent ({sentCount})
             </button>
             <button
-              onClick={() => setStatusFilter('Responded')}
+              onClick={() => { setStatusFilter('Responded'); setCurrentPage(1); }}
               className={`px-2.5 py-1 rounded-md transition ${
                 statusFilter === 'Responded'
                   ? 'bg-white text-gray-900 shadow-2xs font-semibold'
@@ -627,8 +616,8 @@ export default function Dashboard() {
         {/* Footer Tabel Resmi CardFooter Shadcn dengan Navigasi Pagination */}
         <CardFooter className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-gray-100 bg-gray-50/40 px-6 py-3 text-xs text-gray-500 rounded-b-xl">
           <span>
-            Menampilkan {filteredReminders.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}-
-            {Math.min(currentPage * pageSize, filteredReminders.length)} dari {filteredReminders.length} antrean
+            Menampilkan {filteredReminders.length > 0 ? (safeCurrentPage - 1) * pageSize + 1 : 0}-
+            {Math.min(safeCurrentPage * pageSize, filteredReminders.length)} dari {filteredReminders.length} antrean
           </span>
 
           <div className="flex items-center gap-4 sm:gap-6">
@@ -655,7 +644,7 @@ export default function Dashboard() {
 
             {/* Info Halaman */}
             <span className="text-[11px] font-medium text-gray-600">
-              Hal {currentPage} dari {totalPages}
+              Hal {safeCurrentPage} dari {totalPages}
             </span>
 
             {/* Tombol Halaman Prev / Next */}
@@ -666,7 +655,7 @@ export default function Dashboard() {
                 size="icon-sm"
                 className="h-7 w-7 rounded-md border-gray-200 bg-white hover:bg-gray-100 shadow-2xs disabled:opacity-40"
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage <= 1}
+                disabled={safeCurrentPage <= 1}
                 title="Halaman sebelumnya"
               >
                 <ChevronLeft size={14} />
@@ -677,7 +666,7 @@ export default function Dashboard() {
                 size="icon-sm"
                 className="h-7 w-7 rounded-md border-gray-200 bg-white hover:bg-gray-100 shadow-2xs disabled:opacity-40"
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage >= totalPages}
+                disabled={safeCurrentPage >= totalPages}
                 title="Halaman selanjutnya"
               >
                 <ChevronRight size={14} />
