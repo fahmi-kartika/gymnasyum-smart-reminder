@@ -198,4 +198,4 @@ Aplikasi disiapkan untuk deployment cloud pada infrastruktur Amazon Web Services
 ---
 
 ## Lisensi
-ISC License
+MIT License
