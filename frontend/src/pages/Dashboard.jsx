@@ -111,14 +111,13 @@ export default function Dashboard() {
     return filteredReminders.slice(startIndex, startIndex + pageSize);
   }, [filteredReminders, safeCurrentPage, pageSize]);
 
-  // Pilihan jadwal kelas aktif untuk modal booking
+  // Pilihan jadwal kelas aktif untuk modal booking (hanya kelas dengan jam yang belum lewat)
   const availableSchedules = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
 
     return schedules.filter(s => {
       if (!s.class_time) return false;
-      return new Date(s.class_time) >= today;
+      return new Date(s.class_time) > now;
     });
   }, [schedules]);
 
