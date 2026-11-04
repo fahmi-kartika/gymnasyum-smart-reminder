@@ -3,8 +3,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  CalendarClock,
-  Clock,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -470,13 +468,11 @@ export default function Schedules() {
                             {schedule.class_name}
                           </TableCell>
                           <TableCell className="text-xs">
-                            <div className="font-medium text-gray-900 flex items-center gap-1.5">
-                              <CalendarClock size={13} className="text-gray-400" />
-                              <span>{formatDateTime(schedule.class_time)}</span>
+                            <div className="font-medium text-gray-900">
+                              {formatDateTime(schedule.class_time)}
                             </div>
-                            <div className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5 pl-5">
-                              <Clock size={11} className="text-gray-400" />
-                              <span>{formatTimeOnly(schedule.class_time)}</span>
+                            <div className="text-[11px] text-gray-500 mt-0.5">
+                              {formatTimeOnly(schedule.class_time)}
                             </div>
                           </TableCell>
                           <TableCell className="text-xs text-gray-700">
