@@ -51,7 +51,7 @@ const createCustomer = async (req, res) => {
   }
 };
 
-module.exports = { getAllCustomers, createCustomer };
+
 
 // 3. Mengambil satu data pelanggan berdasarkan ID (GET /:id)
 const getCustomerById = async (req, res) => {

@@ -49,7 +49,7 @@ const createSchedule = async (req, res) => {
   }
 };
 
-module.exports = { getAllSchedules, createSchedule };
+
 
 // 3. Mengambil satu jadwal berdasarkan ID (GET /:id)
 const getScheduleById = async (req, res) => {
