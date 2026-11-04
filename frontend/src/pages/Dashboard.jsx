@@ -449,22 +449,9 @@ export default function Dashboard() {
                             onValueChange={(value) => handleStatusChange(reminder.id, value)}
                           >
                             <SelectTrigger className="w-[145px] h-8 text-xs font-medium bg-white border border-gray-200 shadow-2xs rounded-lg">
-                              <div className="flex items-center gap-2">
-                                <span
-                                  className={`w-2 h-2 rounded-full shrink-0 ${
-                                    reminder.status === 'Scheduled'
-                                      ? 'bg-amber-500'
-                                      : reminder.status === 'Sent'
-                                      ? 'bg-blue-500'
-                                      : reminder.status === 'Responded'
-                                      ? 'bg-emerald-500'
-                                      : 'bg-red-500'
-                                  }`}
-                                />
-                                <span className="text-gray-800">{reminder.status}</span>
-                              </div>
+                              <SelectValue placeholder="Pilih status" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent position="popper">
                               <SelectItem value="Scheduled">
                                 <div className="flex items-center gap-2 text-xs">
                                   <span className="w-2 h-2 rounded-full bg-amber-500" />
@@ -527,9 +514,6 @@ export default function Dashboard() {
             <span>
               Menampilkan {displayedReminders.length} dari {totalCount} antrean hari ini
             </span>
-            <div className="flex items-center gap-1">
-              <span className="text-[11px] text-gray-400">Status otomatis tersinkronisasi</span>
-            </div>
           </div>
         </CardContent>
       </Card>
