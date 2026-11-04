@@ -102,9 +102,9 @@ const createReminder = async (req, res) => {
     if (customerData.member_type && customerData.member_type.toUpperCase() === 'VIP') {
       computedPriority = 'High';
     } else {
-      // Syarat 2: Cek histori 5 interaksi terakhir
+      // Syarat 2: Cek SELURUH histori interaksi
       const historyQuery = await pool.query(
-        'SELECT status FROM reminders WHERE customer_id = $1 AND status != $2 ORDER BY created_at DESC LIMIT 5',
+        'SELECT status FROM reminders WHERE customer_id = $1 AND status != $2 ORDER BY created_at DESC LIMIT 10',
         [customer_id, 'Scheduled']
       );
       
@@ -113,10 +113,16 @@ const createReminder = async (req, res) => {
         const noResponseCount = history.filter(h => h.status === 'No Response').length;
         const respondedCount = history.filter(h => h.status === 'Responded').length;
 
-        if (noResponseCount >= 2) {
-           computedPriority = 'High'; // Berisiko churn, butuh prioritas tinggi
-        } else if (respondedCount > noResponseCount) {
-           computedPriority = 'Low'; // Member patuh & mandiri, prioritas diturunkan
+        // Logika Klasifikasi yang Lebih Akurat & Adil:
+        if (respondedCount > noResponseCount) {
+           // Mayoritas membalas -> Aman
+           computedPriority = 'Low'; 
+        } else if (noResponseCount > respondedCount) {
+           // Mayoritas mengabaikan -> Bahaya
+           computedPriority = 'High'; 
+        } else {
+           // Jumlah seri (seimbang 1-1, 2-2, 3-3, dst) -> Netral
+           computedPriority = 'Medium';
         }
       }
     }
