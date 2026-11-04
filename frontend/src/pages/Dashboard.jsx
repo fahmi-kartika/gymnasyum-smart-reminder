@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { MessageCircle, Activity, Clock, Send, CheckCircle, Plus } from 'lucide-react';
+import { MessageCircle, Activity, Clock, Send, CheckCircle, Plus, Trash2 } from 'lucide-react';
 import API from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -66,6 +66,18 @@ export default function Dashboard() {
       alert(`Gagal mengubah status: ${errorMessage}`);
     }
   };
+
+  const handleDelete = async (id, customerName) => {
+  if (window.confirm(`Apakah Anda yakin ingin menghapus reminder untuk ${customerName}?`)) {
+    try {
+      await API.delete(`/reminders/${id}`);
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('Gagal menghapus reminder:', error);
+      alert('Gagal menghapus reminder. Pastikan backend mendukung endpoint DELETE ini.');
+    }
+  }
+};
 
   // Logika form Tambah Reminder
   const handleAddClick = () => {
@@ -256,15 +268,27 @@ export default function Dashboard() {
                           </Select>
                         </TableCell>
                         <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
                           <Button 
                             size="sm" 
-                            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2 ml-auto"
+                            className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
                             onClick={() => handleWhatsApp(reminder.whatsapp_number, reminder.customer_name, reminder.class_name)}
                           >
                             <MessageCircle size={16} />
                             Follow Up
                           </Button>
-                        </TableCell>
+
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="h-8 w-8 px-0 text-red-600 border-red-200 hover:bg-red-50"
+                            onClick={() => handleDelete(reminder.id, reminder.customer_name)}
+                            title="Hapus Reminder"
+                          >
+                            <Trash2 size={16} />
+                          </Button>
+                        </div>
+                      </TableCell>
                       </TableRow>
                     ))
                   )}
