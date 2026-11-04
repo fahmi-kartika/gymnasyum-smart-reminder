@@ -9,6 +9,7 @@ const swaggerSpec = require('./config/swagger'); // Konfigurasi Swagger
 const customerRoutes = require('./routes/customerRoutes');
 const scheduleRoutes = require('./routes/scheduleRoutes');
 const reminderRoutes = require('./routes/reminderRoutes');
+const authRoutes = require('./routes/authRoutes');
 
 // 3. Inisialisasi Aplikasi Express
 const app = express();
@@ -26,6 +27,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use('/api/v1/customers', customerRoutes);
 app.use('/api/v1/schedules', scheduleRoutes);
 app.use('/api/v1/reminders', reminderRoutes);
+app.use('/api/v1/auth', authRoutes);
 
 // Route Dasar (Cek status server)
 app.get('/', (req, res) => {
