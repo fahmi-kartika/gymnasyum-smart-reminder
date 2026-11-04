@@ -11,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -192,38 +192,57 @@ export default function Dashboard() {
           <span>Booking Kelas</span>
         </button>
 
-        {/* Modal Booking Kelas */}
+        {/* Modal Booking Kelas Bergaya Shadcn */}
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-              <DialogTitle>Booking Kelas untuk Member</DialogTitle>
+          <DialogContent className="sm:max-w-[440px] p-6 rounded-xl border border-gray-200/90 shadow-lg bg-white">
+            <DialogHeader className="gap-1 pb-3 border-b border-gray-100">
+              <DialogTitle className="text-base font-bold text-gray-900">
+                Booking Kelas untuk Member
+              </DialogTitle>
+              <DialogDescription className="text-xs text-gray-500">
+                Daftarkan member ke sesi latihan untuk menjadwalkan reminder follow-up.
+              </DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-              <div className="space-y-2">
-                <Label htmlFor="customer">Pilih Member</Label>
+
+            <form onSubmit={handleSubmit} className="space-y-4 pt-1">
+              <div className="space-y-1.5">
+                <Label htmlFor="customer" className="text-xs font-semibold text-gray-700">
+                  Pilih Member
+                </Label>
                 <Select
                   value={formData.customer_id}
                   onValueChange={(val) => setFormData(prev => ({ ...prev, customer_id: val }))}
                   required
                 >
-                  <SelectTrigger><SelectValue placeholder="Pilih Member" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="w-full h-9 text-xs bg-white border border-gray-200 shadow-2xs rounded-lg">
+                    <SelectValue placeholder="Pilih member yang terdaftar..." />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="max-h-56">
                     {customers.map(c => (
-                      <SelectItem key={c.id} value={c.id.toString()}>{c.name}</SelectItem>
+                      <SelectItem key={c.id} value={c.id.toString()}>
+                        <div className="flex items-center justify-between w-full gap-3 text-xs">
+                          <span className="font-medium text-gray-900">{c.name}</span>
+                          <span className="text-[11px] text-gray-400 font-mono">({c.phone})</span>
+                        </div>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="schedule">Pilih Jadwal Kelas</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="schedule" className="text-xs font-semibold text-gray-700">
+                  Pilih Jadwal Kelas
+                </Label>
                 <Select
                   value={formData.schedule_id}
                   onValueChange={(val) => setFormData(prev => ({ ...prev, schedule_id: val }))}
                   required
                 >
-                  <SelectTrigger><SelectValue placeholder="Pilih Kelas" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectTrigger className="w-full h-9 text-xs bg-white border border-gray-200 shadow-2xs rounded-lg">
+                    <SelectValue placeholder="Pilih jadwal kelas aktif..." />
+                  </SelectTrigger>
+                  <SelectContent position="popper" className="max-h-56">
                     {availableSchedules.length === 0 ? (
                       <div className="p-3 text-xs text-gray-500 text-center">
                         Tidak ada kelas aktif mulai hari ini ke depan.
@@ -231,7 +250,13 @@ export default function Dashboard() {
                     ) : (
                       availableSchedules.map(s => (
                         <SelectItem key={s.id} value={s.id.toString()}>
-                          {s.class_name} - {new Date(s.class_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} ({new Date(s.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB)
+                          <div className="flex items-center gap-2 text-xs py-0.5">
+                            <span className="font-semibold text-gray-900">{s.class_name}</span>
+                            <span className="text-gray-300">•</span>
+                            <span className="text-gray-600">
+                              {new Date(s.class_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })}, {new Date(s.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB
+                            </span>
+                          </div>
                         </SelectItem>
                       ))
                     )}
@@ -239,12 +264,25 @@ export default function Dashboard() {
                 </Select>
               </div>
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>Batal</Button>
-                <Button type="submit" disabled={isSubmitting} className="bg-black text-white hover:bg-gray-800">
+              <DialogFooter className="mt-6 pt-3 border-t border-gray-100 flex justify-end gap-2 bg-transparent">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsDialogOpen(false)}
+                  className="h-8 px-3.5 text-xs font-medium border-gray-200 rounded-lg hover:bg-gray-100"
+                >
+                  Batal
+                </Button>
+                <Button
+                  type="submit"
+                  size="sm"
+                  disabled={isSubmitting}
+                  className="h-8 px-3.5 text-xs font-semibold rounded-lg bg-black text-white hover:bg-gray-800 shadow-2xs"
+                >
                   {isSubmitting ? 'Menyimpan...' : 'Simpan Data'}
                 </Button>
-              </div>
+              </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
