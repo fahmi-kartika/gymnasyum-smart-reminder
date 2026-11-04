@@ -220,9 +220,11 @@ export default function Dashboard() {
                   <SelectContent position="popper" className="max-h-56">
                     {customers.map(c => (
                       <SelectItem key={c.id} value={c.id.toString()}>
-                        <div className="flex items-center justify-between w-full gap-3 text-xs">
+                        <div className="flex items-center gap-2 text-xs">
                           <span className="font-medium text-gray-900">{c.name}</span>
-                          <span className="text-[11px] text-gray-400 font-mono">({c.phone})</span>
+                          {c.whatsapp_number && (
+                            <span className="text-gray-400">({c.whatsapp_number})</span>
+                          )}
                         </div>
                       </SelectItem>
                     ))}
