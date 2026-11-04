@@ -1,118 +1,120 @@
-# Gymnasyum Smart Reminder 🏋️‍♂️📲
+# Gymnasyum Smart Reminder
 **Sistem Manajemen Reminder & Follow-up Pelanggan Berbasis Web**  
 *Dicoding Capstone Project - ID: DB15-I020*
 
 ---
 
-## 📌 Tentang Proyek
-**Gymnasyum Smart Reminder** adalah platform berbasis web yang dirancang khusus untuk memodernisasi operasional pusat kebugaran (*gym/fitness center*). Sistem ini mengotomasi alur konfirmasi kehadiran member dan pengingat sesi latihan kelas kebugaran melalui integrasi pesan WhatsApp terstruktur, pelacakan kuota peserta secara *real-time*, serta manajemen data pelanggan dan jadwal kelas yang terpusat.
+## Tentang Proyek
+Gymnasyum Smart Reminder adalah platform berbasis web yang dirancang untuk mempermudah operasional pusat kebugaran (*gym/fitness center*). Sistem ini mengotomasi alur konfirmasi kehadiran member dan pengingat sesi kelas kebugaran melalui integrasi tautan pesan WhatsApp terstruktur, pelacakan kuota peserta secara *real-time*, serta manajemen data member dan jadwal kelas yang terpusat.
 
-### 🎯 Masalah yang Diselesaikan:
-1. **Ketidakhadiran Member (*No-Show Rate*)**: Member gym sering lupa jadwal latihan yang telah dipesan.
-2. **Follow-up Manual yang Memakan Waktu**: Staf admin gym menghabiskan banyak waktu menyusun pesan pengingat satu per satu secara manual.
-3. **Kelebihan Kapasitas Kelas (*Overbooked*)**: Kuota kelas terbatas rawan terlampaui tanpa validasi sistematis.
-4. **Pencatatan Terpisah**: Riwayat respon pelanggan dan status konfirmasi kehadiran tidak terdokumentasi dengan baik.
-
----
-
-## 🚀 Fitur Utama
-
-### 1. 🔐 Autentikasi & Otorisasi Admin
-- Login aman berbasis token **JSON Web Token (JWT)**.
-- Rute halaman terproteksi (*Protected Routes*) di frontend agar data tidak dapat diakses tanpa sesi aktif.
-- Identitas akun admin dan tombol keluar (*logout*) yang mudah diakses pada navigasi sidebar.
-
-### 2. 📊 Dashboard & Antrean Follow-up Cerdas
-- **5 Kartu Metrik Ringkasan**: Memantau total antrean hari ini, *Scheduled*, *Sent*, *Responded*, dan *Tidak Ada Respons*.
-- **Booking Peserta ke Jadwal Kelas**:
-  - Filter otomatis jam kelas yang telah lampau.
-  - **Pencegahan Booking Ganda**: Validasi agar member tidak dapat mendaftar dua kali pada kelas yang sama.
-  - **Validasi Kuota Realtime**: Peringatan dan penonaktifan tombol booking jika kuota kelas telah penuh.
-- **Generator Pesan WhatsApp Terstruktur**: Tombol aksi cepat yang langsung membuka WhatsApp Web/App (`wa.me`) dengan pesan dinamis mencakup nama member, nama kelas, hari/tanggal, jam pelaksanaan (WIB), dan nama instruktur.
-- **Pembaruan Status Interaktif**: Dropdown instan untuk mengubah status respon member (*Scheduled* $\rightarrow$ *Sent* $\rightarrow$ *Responded* / *No Response*).
-
-### 3. 👥 Manajemen Data Member
-- Operasi CRUD lengkap (Tambah, Lihat, Edit, Hapus member) dengan modal konfirmasi aman.
-- Validasi ketat nomor WhatsApp (hanya digit numerik).
-- Klasifikasi tipe keanggotaan (**VIP** & **Regular**) dengan tab filter cepat.
-- Modal popup **Riwayat Reminder**: Melacak histori seluruh pengingat kelas yang pernah dikirimkan ke pelanggan terkait beserta status responnya.
-
-### 4. 📅 Manajemen Jadwal Kelas
-- Operasi CRUD lengkap untuk seluruh jadwal sesi latihan gym.
-- Informasi tanggal, waktu pelaksanaan, instruktur pelatih, dan batas kuota peserta.
-- Tab filter status sesi latihan (**Semua**, **Mendatang**, dan **Selesai**).
-
-### 5. 🎨 Standar UI/UX Profesional
-- Desain antarmuka modern terinspirasi oleh **Shadcn UI** dengan aksen *Royal Blue* (`#2563eb`).
-- **Anti-Layout Shift**: Tabel menggunakan `table-fixed` dengan persentase lebar terkunci dan kontainer utama menggunakan `scrollbar-gutter: stable`, sehingga layout tidak bergeser saat pagination maupun saat navigasi halaman.
-
-### 6. 📖 Dokumentasi API Interaktif (Swagger / OpenAPI)
-- Dokumentasi seluruh endpoint RESTful API terintegrasi langsung di `/api-docs`.
+### Masalah yang Diselesaikan:
+1. **Tingkat Ketidakhadiran Member (*No-Show Rate*)**: Member gym sering kali melewatkan jadwal latihan yang telah dipesan.
+2. **Follow-up Manual yang Tidak Efisien**: Staf admin gym menghabiskan banyak waktu menyusun pesan pengingat satu per satu secara manual.
+3. **Kelebihan Kapasitas Kelas (*Overbooked*)**: Kuota kelas latihan rawan terlampaui tanpa validasi kapasitas terintegrasi.
+4. **Pencatatan yang Terfragmentasi**: Riwayat interaksi dan konfirmasi kehadiran pelanggan sering kali tidak terdokumentasi rapi.
 
 ---
 
-## 🛠️ Tech Stack & Arsitektur
+## Fitur Utama
+
+### 1. Autentikasi & Otorisasi Admin
+- Login berbasis JSON Web Token (JWT).
+- Rute halaman terproteksi (*Protected Routes*) di frontend untuk menjaga keamanan data.
+- Sesi akun admin dan navigasi keluar (*logout*) terintegrasi pada sidebar.
+
+### 2. Dashboard & Antrean Follow-up
+- Ringkasan metrik status antrean: Total Antrean, Scheduled, Sent, Responded, dan Tidak Ada Respons.
+- Pendaftaran (*booking*) member ke jadwal kelas dengan proteksi:
+  - Filter otomatis untuk jam kelas yang telah terlewat hari ini.
+  - Pencegahan pendaftaran ganda (*duplicate booking check*).
+  - Validasi sisa kuota kapasitas secara *real-time*.
+- Pembuatan pesan WhatsApp terstruktur yang mencakup nama member, nama kelas, tanggal, jam pelaksanaan, dan instruktur.
+- Pembaruan status interaksi langsung melalui dropdown (*Scheduled*, *Sent*, *Responded*, *No Response*).
+
+### 3. Manajemen Data Member
+- Operasi CRUD (Create, Read, Update, Delete) data pelanggan.
+- Validasi format nomor WhatsApp berbasis numerik.
+- Pengelompokan tipe keanggotaan (VIP dan Regular) dengan tab filter cepat.
+- Modal riwayat aktivitas pengingat per member lengkap dengan indikator status.
+
+### 4. Manajemen Jadwal Kelas
+- Operasi CRUD jadwal sesi latihan kebugaran.
+- Pengaturan kapasitas kuota peserta per sesi kelas.
+- Filter jadwal berdasarkan waktu pelaksanaan (Semua, Mendatang, Selesai).
+
+### 5. Standar Antarmuka (UI/UX)
+- Antarmuka berbasis komponen Shadcn UI dengan tema aksen Royal Blue (`#2563eb`).
+- Pencegahan pergeseran tata letak (*anti-layout shift*) menggunakan `table-fixed` dan `scrollbar-gutter: stable`.
+- Paginasi data yang konsisten di seluruh tabel.
+
+### 6. Dokumentasi API
+- Dokumentasi interaktif berbasis Swagger / OpenAPI 3.0 yang dapat diakses langsung pada endpoint `/api-docs`.
+
+---
+
+## Arsitektur & Teknologi
 
 ### Frontend:
-- **Framework**: React 19 (Vite)
-- **Routing**: React Router DOM
-- **Styling**: Tailwind CSS v4 & Lucide React Icons
-- **Komponen UI**: Shadcn UI Pattern (Card, Table, Dialog, Select, Badge, Skeleton, Button, Input, Label)
-- **HTTP Client**: Axios dengan JWT Request Interceptor
+- Framework: React 19 (Vite)
+- Routing: React Router DOM
+- Styling: Tailwind CSS v4
+- Ikon: Lucide React
+- Desain Komponen: Shadcn UI Pattern
+- HTTP Client: Axios (dengan JWT Request Interceptor)
 
 ### Backend:
-- **Runtime & Framework**: Node.js & Express.js
-- **Database**: PostgreSQL (Driver `pg` dengan Connection Pooling)
-- **Validasi Data**: Joi Schema Validation
-- **Keamanan**: JWT (`jsonwebtoken`), CORS, Dotenv
-- **Dokumentasi API**: Swagger JSDoc & Swagger UI Express
+- Runtime & Framework: Node.js & Express.js
+- Database: PostgreSQL (Driver `pg` dengan Connection Pool)
+- Validasi Request: Joi Schema
+- Keamanan: JWT (`jsonwebtoken`), CORS, Dotenv
+- Dokumentasi: Swagger JSDoc & Swagger UI Express
 
 ---
 
-## 🗄️ Skema Database
+## Skema Database
 
-Sistem menggunakan database relasional PostgreSQL dengan 3 tabel utama:
+Sistem menggunakan database relasional PostgreSQL dengan tiga tabel utama:
 
 ```
 [ customers ] 1 ──< [ reminders ] >── 1 [ schedules ]
 ```
 
-1. **`customers`**: Menyimpan biodata member gym (`id`, `name`, `whatsapp_number`, `member_type`, `preferences`, `created_at`).
-2. **`schedules`**: Menyimpan sesi kelas latihan (`id`, `class_name`, `class_time`, `instructor_name`, `quota`, `created_at`).
-3. **`reminders`**: Menghubungkan member dan jadwal sesi latihan (`id`, `customer_id`, `schedule_id`, `priority`, `status`, `created_at`, `updated_at`). Dilengkapi `ON DELETE CASCADE`.
+1. **customers**: Menyimpan biodata pelanggan gym (`id`, `name`, `whatsapp_number`, `member_type`, `preferences`, `created_at`).
+2. **schedules**: Menyimpan sesi kelas latihan (`id`, `class_name`, `class_time`, `instructor_name`, `quota`, `created_at`).
+3. **reminders**: Menghubungkan member dan jadwal sesi latihan (`id`, `customer_id`, `schedule_id`, `priority`, `status`, `created_at`, `updated_at`). Menggunakan *foreign key cascade delete*.
 
 ---
 
-## 💻 Panduan Instalasi & Menjalankan di Komputer Lokal
+## Panduan Instalasi Lokal
 
 ### 1. Prasyarat Sistem
-- **Node.js**: Versi 18.x atau lebih baru ([Unduh Node.js](https://nodejs.org/))
-- **PostgreSQL**: Server PostgreSQL aktif ([Unduh PostgreSQL](https://www.postgresql.org/))
-- **Git**: Terinstal di sistem
+- Node.js versi 18.x atau lebih baru
+- PostgreSQL Server aktif
+- Git
 
 ---
 
-### 2. Setup Database & Backend
+### 2. Konfigurasi Backend & Database
 1. Buka terminal dan masuk ke direktori backend:
    ```bash
    cd backend
    ```
 
-2. Instal dependensi:
+2. Pasang dependensi:
    ```bash
    npm install
    ```
 
-3. Buat database di PostgreSQL bernama `gymnasyum_db`:
+3. Buat database baru di PostgreSQL:
    ```sql
    CREATE DATABASE gymnasyum_db;
    ```
 
-4. Konfigurasikan file `.env` di folder `backend/`:
+4. Buat file `.env` pada direktori `backend/` dengan konfigurasi berikut:
    ```env
    PORT=5000
    DB_USER=postgres
-   DB_PASSWORD=password_postgres_anda
+   DB_PASSWORD=password_database_anda
    DB_HOST=localhost
    DB_PORT=5432
    DB_NAME=gymnasyum_db
@@ -122,31 +124,31 @@ Sistem menggunakan database relasional PostgreSQL dengan 3 tabel utama:
    JWT_SECRET=super_secret_jwt_key_gymnasyum
    ```
 
-5. Inisialisasi tabel database:
+5. Jalankan inisialisasi tabel:
    ```bash
    npm run db:init
    ```
 
-6. *(Sangat Direkomendasikan)* Isi data dummy siap uji (21 member, 21 jadwal, 21 antrean reminder):
+6. Jalankan seeder data dummy (21 member, 21 jadwal, 21 antrean reminder):
    ```bash
    npm run db:seed
    ```
 
-7. Jalankan server backend:
+7. Jalankan server pengembang backend:
    ```bash
    npm run dev
    ```
-   *Server backend akan berjalan di `http://localhost:5000` dan Swagger API docs di `http://localhost:5000/api-docs`.*
+   *Backend berjalan pada `http://localhost:5000` dan Swagger API pada `http://localhost:5000/api-docs`.*
 
 ---
 
-### 3. Setup Frontend
+### 3. Konfigurasi Frontend
 1. Buka terminal baru dan masuk ke direktori frontend:
    ```bash
    cd frontend
    ```
 
-2. Instal dependensi:
+2. Pasang dependensi:
    ```bash
    npm install
    ```
@@ -155,49 +157,45 @@ Sistem menggunakan database relasional PostgreSQL dengan 3 tabel utama:
    ```bash
    npm run dev
    ```
-   *Aplikasi frontend akan terbuka di `http://localhost:5173`.*
+   *Frontend dapat diakses pada `http://localhost:5173`.*
 
 ---
 
-## 🔑 Kredensial Login Default
-Gunakan akun administrator berikut untuk masuk ke sistem:
+## Kredensial Administrator
 - **Username**: `admin`
 - **Password**: `admin123`
 
 ---
 
-## 📡 Daftar Endpoint RESTful API
+## Daftar Endpoint API
 
 | Method | Endpoint | Deskripsi | Akses |
 | :--- | :--- | :--- | :---: |
-| **POST** | `/api/v1/auth/login` | Login admin & generate token JWT | Publik |
-| **GET** | `/api/v1/customers` | Mengambil seluruh data member | Terproteksi |
-| **POST** | `/api/v1/customers` | Menambahkan data member baru | Terproteksi |
-| **PUT** | `/api/v1/customers/:id` | Memperbarui data member | Terproteksi |
-| **DELETE** | `/api/v1/customers/:id` | Menghapus data member | Terproteksi |
-| **GET** | `/api/v1/schedules` | Mengambil seluruh jadwal kelas | Terproteksi |
-| **POST** | `/api/v1/schedules` | Menambahkan jadwal kelas baru | Terproteksi |
-| **PUT** | `/api/v1/schedules/:id` | Memperbarui data jadwal kelas | Terproteksi |
-| **DELETE** | `/api/v1/schedules/:id` | Menghapus data jadwal kelas | Terproteksi |
-| **GET** | `/api/v1/reminders` | Mengambil seluruh antrean reminder | Terproteksi |
-| **POST** | `/api/v1/reminders` | Booking / daftarkan member ke jadwal | Terproteksi |
-| **PATCH** | `/api/v1/reminders/:id/status` | Update status respon interaksi reminder | Terproteksi |
-| **DELETE** | `/api/v1/reminders/:id` | Menghapus reminder dari antrean | Terproteksi |
-| **GET** | `/api/v1/reminders/customer/:id` | Riwayat aktivitas reminder member | Terproteksi |
+| POST | `/api/v1/auth/login` | Autentikasi admin dan penerbitan token JWT | Publik |
+| GET | `/api/v1/customers` | Mengambil seluruh data member | Terproteksi |
+| POST | `/api/v1/customers` | Mendaftarkan member baru | Terproteksi |
+| PUT | `/api/v1/customers/:id` | Memperbarui data member | Terproteksi |
+| DELETE | `/api/v1/customers/:id` | Menghapus data member | Terproteksi |
+| GET | `/api/v1/schedules` | Mengambil seluruh jadwal kelas | Terproteksi |
+| POST | `/api/v1/schedules` | Menambahkan jadwal kelas baru | Terproteksi |
+| PUT | `/api/v1/schedules/:id` | Memperbarui data jadwal kelas | Terproteksi |
+| DELETE | `/api/v1/schedules/:id` | Menghapus data jadwal kelas | Terproteksi |
+| GET | `/api/v1/reminders` | Mengambil seluruh antrean reminder | Terproteksi |
+| POST | `/api/v1/reminders` | Pendaftaran member ke jadwal kelas | Terproteksi |
+| PATCH | `/api/v1/reminders/:id/status` | Memperbarui status interaksi reminder | Terproteksi |
+| DELETE | `/api/v1/reminders/:id` | Menghapus reminder dari antrean | Terproteksi |
+| GET | `/api/v1/reminders/customer/:id` | Riwayat reminder spesifik member | Terproteksi |
 
 ---
 
-## 🌐 Rencana Deployment (AWS)
-Aplikasi ini dirancang *cloud-ready* untuk di-deploy ke **Amazon Web Services (AWS)**:
-- **Compute Server**: AWS EC2 (Ubuntu Server) dengan Node.js runtime & PM2 process manager.
-- **Web Server & Reverse Proxy**: Nginx untuk melayani *production build* frontend React serta *reverse proxy* request `/api` ke Express.
-- **Database**: AWS RDS PostgreSQL (atau PostgreSQL terkelola di EC2).
-- **Domain & SSL**: AWS Route 53 & Let's Encrypt (Certbot) untuk protokol HTTPS aman.
+## Deployment (AWS)
+Aplikasi disiapkan untuk deployment cloud pada infrastruktur Amazon Web Services (AWS):
+- **Server Komputasi**: AWS EC2 (Ubuntu Server) dengan Node.js dan PM2.
+- **Reverse Proxy & Web Server**: Nginx untuk melayani aset statis frontend dan meneruskan request API ke backend.
+- **Basis Data**: AWS RDS PostgreSQL atau instance PostgreSQL pada EC2.
+- **Keamanan Jaringan**: AWS Security Groups dan sertifikat SSL Let's Encrypt (Certbot).
 
 ---
 
-## 👨‍💻 Pengembang
-Proyek ini dikembangkan sebagai pemenuhan **Capstone Project Dicoding**.
-- **Peran**: Solo Full-Stack Web Developer
-- **Lisensi**: ISC License
-
+## Lisensi
+ISC License

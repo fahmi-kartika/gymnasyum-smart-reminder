@@ -3,7 +3,6 @@ import {
   MessageCircle,
   Plus,
   Trash2,
-  Clock,
   ChevronLeft,
   ChevronRight
 } from 'lucide-react';
@@ -604,17 +603,14 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
                         {/* Kelas & Jam */}
                         <TableCell className="text-xs">
                           <div className="font-medium text-gray-900 truncate">{reminder.class_name}</div>
-                          <div className="text-[11px] text-gray-500 flex items-center gap-1 mt-0.5">
-                            <Clock size={11} className="text-gray-400" />
-                            <span>
-                              {reminder.class_time
-                                ? new Date(reminder.class_time).toLocaleTimeString('id-ID', {
-                                    hour: '2-digit',
-                                    minute: '2-digit'
-                                  })
-                                : '-'}{' '}
-                              WIB
-                            </span>
+                          <div className="text-[11px] text-gray-500 mt-0.5">
+                            {reminder.class_time
+                              ? new Date(reminder.class_time).toLocaleTimeString('id-ID', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })
+                              : '-'}{' '}
+                            WIB
                           </div>
                         </TableCell>
 
