@@ -61,6 +61,17 @@ export default function Dashboard() {
 
     const priorityWeight = { 'High': 3, 'Medium': 2, 'Low': 1 };
     return filtered.sort((a, b) => {
+      const scheduleA = schedules.find(s => s.id === a.schedule_id);
+      const scheduleB = schedules.find(s => s.id === b.schedule_id);
+      const timeA = new Date(a.class_time || scheduleA?.class_time || 0).getTime();
+      const timeB = new Date(b.class_time || scheduleB?.class_time || 0).getTime();
+
+      // Urutkan berdasarkan jam kelas terdekat lebih dahulu
+      if (timeA !== timeB) {
+        return timeA - timeB;
+      }
+
+      // Jika jam sama, urutkan berdasarkan prioritas
       const weightA = priorityWeight[a.priority] || 0;
       const weightB = priorityWeight[b.priority] || 0;
       return weightB - weightA; 
@@ -234,7 +245,12 @@ export default function Dashboard() {
                     todaysReminders.map((reminder) => (
                       <TableRow key={reminder.id}>
                         <TableCell className="font-medium">{reminder.customer_name}</TableCell>
-                        <TableCell>{reminder.class_name}</TableCell>
+                        <TableCell>
+                          <div>{reminder.class_name}</div>
+                          <div className="text-xs text-gray-500">
+                            {reminder.class_time ? new Date(reminder.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }) : '-'} WIB
+                          </div>
+                        </TableCell>
                         <TableCell>
                           <Badge variant="outline" className={
                             reminder.priority?.toLowerCase() === 'high' ? 'text-red-600 border-red-200 bg-red-50' : 
