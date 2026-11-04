@@ -94,9 +94,37 @@ const createReminder = async (req, res) => {
       return res.status(404).json({ success: false, message: 'Pelanggan tidak ditemukan' });
     }
 
-    const scheduleCheck = await pool.query('SELECT id FROM schedules WHERE id = $1', [schedule_id]);
+    const scheduleCheck = await pool.query('SELECT id, class_name, quota FROM schedules WHERE id = $1', [schedule_id]);
     if (scheduleCheck.rows.length === 0) {
       return res.status(404).json({ success: false, message: 'Jadwal kelas tidak ditemukan' });
+    }
+
+    // Cek apakah member sudah pernah mendaftar pada jadwal kelas yang sama
+    const duplicateCheck = await pool.query(
+      'SELECT id FROM reminders WHERE customer_id = $1 AND schedule_id = $2',
+      [customer_id, schedule_id]
+    );
+    if (duplicateCheck.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Member ini sudah terdaftar pada jadwal kelas tersebut'
+      });
+    }
+
+    // Cek apakah kuota peserta kelas masih tersedia
+    const scheduleData = scheduleCheck.rows[0];
+    if (scheduleData.quota) {
+      const quotaCheck = await pool.query(
+        'SELECT COUNT(*)::int AS count FROM reminders WHERE schedule_id = $1',
+        [schedule_id]
+      );
+      const bookedCount = quotaCheck.rows[0].count;
+      if (bookedCount >= scheduleData.quota) {
+        return res.status(400).json({
+          success: false,
+          message: `Kuota kelas ${scheduleData.class_name} sudah penuh (${bookedCount}/${scheduleData.quota})`
+        });
+      }
     }
 
     // Klasifikasi prioritas otomatis murni berbasis riwayat respons reminder sebelumnya

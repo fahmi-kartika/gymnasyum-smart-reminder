@@ -121,6 +121,22 @@ export default function Dashboard() {
     });
   }, [schedules]);
 
+  // Jumlah pendaftar aktif pada tiap jadwal kelas untuk pengecekan kuota
+  const scheduleBookedMap = useMemo(() => {
+    const map = {};
+    reminders.forEach(r => {
+      map[r.schedule_id] = (map[r.schedule_id] || 0) + 1;
+    });
+    return map;
+  }, [reminders]);
+
+  // Set ID jadwal kelas yang sudah pernah dibooking oleh member yang sedang dipilih
+  const bookedScheduleIdsByCustomer = useMemo(() => {
+    if (!formData.customer_id) return new Set();
+    const cId = parseInt(formData.customer_id, 10);
+    return new Set(reminders.filter(r => r.customer_id === cId).map(r => r.schedule_id));
+  }, [reminders, formData.customer_id]);
+
   const handleWhatsApp = async (reminder) => {
     if (!reminder.whatsapp_number) return;
 
@@ -170,7 +186,8 @@ export default function Dashboard() {
       setRefreshTrigger(prev => prev + 1);
     } catch (error) {
       console.error('Gagal menyimpan reminder:', error);
-      alert('Gagal menambah reminder.');
+      const errorMsg = error.response?.data?.message || 'Gagal menambah reminder.';
+      alert(errorMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -239,7 +256,7 @@ export default function Dashboard() {
                 </Label>
                 <Select
                   value={formData.customer_id}
-                  onValueChange={(val) => setFormData(prev => ({ ...prev, customer_id: val }))}
+                  onValueChange={(val) => setFormData(prev => ({ ...prev, customer_id: val, schedule_id: '' }))}
                   required
                 >
                   <SelectTrigger className="w-full h-9 text-xs bg-white border border-gray-200 shadow-2xs rounded-lg">
@@ -275,17 +292,35 @@ export default function Dashboard() {
                         Tidak ada kelas aktif mulai hari ini ke depan.
                       </div>
                     ) : (
-                      availableSchedules.map(s => (
-                        <SelectItem key={s.id} value={s.id.toString()}>
-                          <span className="text-xs">
-                            <span className="font-semibold text-gray-900">{s.class_name}</span>
-                            {' - '}
-                            <span className="text-gray-600">
-                              {new Date(s.class_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} ({new Date(s.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB)
+                      availableSchedules.map(s => {
+                        const bookedCount = scheduleBookedMap[s.id] || 0;
+                        const isFull = s.quota && bookedCount >= s.quota;
+                        const isAlreadyBooked = bookedScheduleIdsByCustomer.has(s.id);
+                        const isDisabled = isFull || isAlreadyBooked;
+
+                        return (
+                          <SelectItem
+                            key={s.id}
+                            value={s.id.toString()}
+                            disabled={isDisabled}
+                          >
+                            <span className="text-xs">
+                              <span className="font-semibold text-gray-900">{s.class_name}</span>
+                              {' - '}
+                              <span className="text-gray-600">
+                                {new Date(s.class_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} ({new Date(s.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB)
+                              </span>
+                              {isAlreadyBooked ? (
+                                <span className="ml-1 text-amber-600 font-medium"> (Sudah Terdaftar)</span>
+                              ) : isFull ? (
+                                <span className="ml-1 text-red-600 font-medium"> (Penuh: {bookedCount}/{s.quota})</span>
+                              ) : s.quota ? (
+                                <span className="ml-1 text-emerald-600 font-medium"> (Sisa {s.quota - bookedCount}/{s.quota})</span>
+                              ) : null}
                             </span>
-                          </span>
-                        </SelectItem>
-                      ))
+                          </SelectItem>
+                        );
+                      })
                     )}
                   </SelectContent>
                 </Select>
