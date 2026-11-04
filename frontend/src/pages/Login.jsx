@@ -98,7 +98,7 @@ export default function Login() {
 
         {/* Footer Hak Cipta */}
         <p className="text-xs text-gray-400 text-center lg:text-left">
-          &copy; {new Date().getFullYear()} Gymnasyum. Sistem Manajemen Follow-up Pelanggan.
+          &copy; {new Date().getFullYear()} Gymnasyum. Sistem Manajemen Reminder & Follow-up Pelanggan.
         </p>
       </div>
 
