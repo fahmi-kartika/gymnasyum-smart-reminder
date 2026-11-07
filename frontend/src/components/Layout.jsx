@@ -4,7 +4,6 @@ import {
   LayoutDashboard,
   Users,
   CalendarClock,
-  Dumbbell,
   Menu,
   X,
   LogOut,
@@ -34,7 +33,7 @@ export default function Layout({ children }) {
       {/* Header Mobile */}
       <header className="md:hidden flex items-center justify-between px-5 h-16 bg-white border-b border-gray-200 shrink-0">
         <div className="flex items-center gap-2.5">
-          <Dumbbell className="h-5 w-5 text-blue-600 shrink-0" />
+          <img src="/logo-gymnasyum.png" alt="Logo Gymnasyum" className="h-6 w-6 rounded-full object-contain shrink-0" />
           <div className="flex flex-col">
             <span className="text-base font-bold tracking-tight leading-tight">Gymnasyum</span>
             <span className="text-[11px] text-blue-600 font-medium">Smart Reminder</span>
@@ -69,7 +68,7 @@ export default function Layout({ children }) {
           {/* Logo & Judul Brand */}
           <div className="h-16 flex items-center justify-between px-5 border-b border-gray-100">
             <div className="flex items-center gap-2.5">
-              <Dumbbell className="h-6 w-6 text-blue-600 shrink-0" />
+              <img src="/logo-gymnasyum.png" alt="Logo Gymnasyum" className="h-7 w-7 rounded-full object-contain shrink-0" />
               <div className="flex flex-col">
                 <span className="text-base font-bold tracking-tight leading-tight">Gymnasyum</span>
                 <span className="text-xs text-blue-600 font-medium">Smart Reminder</span>

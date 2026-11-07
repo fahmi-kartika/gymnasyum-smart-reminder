@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell } from 'lucide-react';
 import API from '../services/api';
 
 export default function Login() {
@@ -36,8 +35,8 @@ export default function Login() {
       {/* Kolom Kiri: Formulir Login */}
       <div className="w-full lg:w-1/2 flex flex-col justify-between p-8 sm:p-12 lg:p-16">
         {/* Brand Header */}
-        <div className="flex items-center gap-2 text-blue-600">
-          <Dumbbell className="h-6 w-6" />
+        <div className="flex items-center gap-2.5">
+          <img src="/logo-gymnasyum.png" alt="Logo Gymnasyum" className="h-7 w-7 rounded-full object-contain shrink-0" />
           <span className="text-lg font-bold tracking-tight text-gray-900">
             Gymnasyum <span className="text-blue-600 font-medium text-sm ml-1">Smart Reminder</span>
           </span>
