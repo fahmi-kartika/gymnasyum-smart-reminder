@@ -6,8 +6,8 @@
   <p><strong>Cohort ID: B26B15J007 - Naufal Fahmi Kartika - Full-Stack Web Developer</strong></p>
 
   <p>
-    <strong>Aplikasi Web Live:</strong> <a href="http://13.214.36.68/">http://13.214.36.68/</a> &nbsp;|&nbsp;
-    <strong>Swagger API Docs:</strong> <a href="http://13.214.36.68/api-docs">http://13.214.36.68/api-docs</a>
+    <strong>Aplikasi Web Live:</strong> <a href="https://gymnasyum.duckdns.org/">https://gymnasyum.duckdns.org/</a> &nbsp;|&nbsp;
+    <strong>Swagger API Docs:</strong> <a href="https://gymnasyum.duckdns.org/api-docs">https://gymnasyum.duckdns.org/api-docs</a>
   </p>
 </div>
 
@@ -210,15 +210,16 @@ Sistem menggunakan database relasional PostgreSQL dengan tiga tabel utama:
 ---
 
 ## Deployment (AWS)
-Aplikasi telah berhasil di-deploy dan aktif berjalan secara publik di infrastruktur Amazon Web Services (AWS):
-- **Tautan Website Live**: [http://13.214.36.68/](http://13.214.36.68/)
-- **Dokumentasi API (Swagger)**: [http://13.214.36.68/api-docs](http://13.214.36.68/api-docs)
+Aplikasi telah berhasil di-deploy dan aktif berjalan secara publik di infrastruktur Amazon Web Services (AWS) dengan domain kustom dan sertifikat SSL:
+- **Tautan Website Live**: [https://gymnasyum.duckdns.org/](https://gymnasyum.duckdns.org/) (IP: `13.214.36.68`)
+- **Dokumentasi API (Swagger)**: [https://gymnasyum.duckdns.org/api-docs](https://gymnasyum.duckdns.org/api-docs)
 - **Kredensial Admin Default**: `admin` / `admin123`
-- **Server Komputasi**: AWS EC2 (Ubuntu Server) di Region Singapore (`ap-southeast-1`).
+- **Domain & Protokol Keamanan**: DuckDNS dengan sertifikat SSL/TLS HTTPS otomatis via Let's Encrypt (Certbot).
+- **Server Komputasi**: AWS EC2 (Ubuntu Server 24.04 LTS) di Region Singapore (`ap-southeast-1`).
 - **Process Manager**: PM2 untuk menjaga proses backend Node.js aktif 24/7.
 - **Web Server & Reverse Proxy**: Nginx untuk melayani aset frontend React dan meneruskan request API `/api/` ke backend.
 - **Basis Data**: PostgreSQL Server aktif pada instance EC2.
-- **Keamanan Jaringan**: AWS Security Group dengan port 80 (HTTP) dan port 22 (SSH).
+- **Keamanan Jaringan**: AWS Security Group dengan port 80 (HTTP), 443 (HTTPS), dan port 22 (SSH).
 
 ---
 
