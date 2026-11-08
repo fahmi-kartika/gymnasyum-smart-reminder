@@ -4,6 +4,11 @@
   <p><strong>Sistem Manajemen Reminder &amp; Follow-up Pelanggan Berbasis Web</strong></p>
   <p><em>Dicoding Capstone Project - ID: DB15-I020</em></p>
   <p><strong>Cohort ID: B26B15J007 - Naufal Fahmi Kartika - Full-Stack Web Developer</strong></p>
+
+  <p>
+    <strong>Aplikasi Web Live:</strong> <a href="http://13.214.36.68/">http://13.214.36.68/</a> &nbsp;|&nbsp;
+    <strong>Swagger API Docs:</strong> <a href="http://13.214.36.68/api-docs">http://13.214.36.68/api-docs</a>
+  </p>
 </div>
 
 ---
@@ -205,11 +210,15 @@ Sistem menggunakan database relasional PostgreSQL dengan tiga tabel utama:
 ---
 
 ## Deployment (AWS)
-Aplikasi disiapkan untuk deployment cloud pada infrastruktur Amazon Web Services (AWS):
-- **Server Komputasi**: AWS EC2 (Ubuntu Server) dengan Node.js dan PM2.
-- **Reverse Proxy & Web Server**: Nginx untuk melayani aset statis frontend dan meneruskan request API ke backend.
-- **Basis Data**: AWS RDS PostgreSQL atau instance PostgreSQL pada EC2.
-- **Keamanan Jaringan**: AWS Security Groups dan sertifikat SSL Let's Encrypt (Certbot).
+Aplikasi telah berhasil di-deploy dan aktif berjalan secara publik di infrastruktur Amazon Web Services (AWS):
+- **Tautan Website Live**: [http://13.214.36.68/](http://13.214.36.68/)
+- **Dokumentasi API (Swagger)**: [http://13.214.36.68/api-docs](http://13.214.36.68/api-docs)
+- **Kredensial Admin Default**: `admin` / `admin123`
+- **Server Komputasi**: AWS EC2 (Ubuntu Server) di Region Singapore (`ap-southeast-1`).
+- **Process Manager**: PM2 untuk menjaga proses backend Node.js aktif 24/7.
+- **Web Server & Reverse Proxy**: Nginx untuk melayani aset frontend React dan meneruskan request API `/api/` ke backend.
+- **Basis Data**: PostgreSQL Server aktif pada instance EC2.
+- **Keamanan Jaringan**: AWS Security Group dengan port 80 (HTTP) dan port 22 (SSH).
 
 ---
 
