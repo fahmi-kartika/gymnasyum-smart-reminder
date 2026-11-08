@@ -1,6 +1,21 @@
-# Gymnasyum Smart Reminder
-**Sistem Manajemen Reminder & Follow-up Pelanggan Berbasis Web**  
-*Dicoding Capstone Project - ID: DB15-I020*
+<div align="center">
+  <img src="frontend/public/logo-gymnasyum.png" alt="Logo Gymnasyum" width="96" />
+  <h1>Gymnasyum Smart Reminder</h1>
+  <p><strong>Sistem Manajemen Reminder &amp; Follow-up Pelanggan Berbasis Web</strong></p>
+  <p><em>Dicoding Capstone Project - ID: DB15-I020</em></p>
+</div>
+
+---
+
+## Tangkapan Layar Aplikasi
+
+| Dashboard Follow-up | Manajemen Data Member |
+| :---: | :---: |
+| ![Dashboard Follow-up](docs/screenshots/dashboard.png) | ![Data Member](docs/screenshots/customers.png) |
+
+| Manajemen Jadwal Kelas | Halaman Login |
+| :---: | :---: |
+| ![Jadwal Kelas](docs/screenshots/schedules.png) | ![Halaman Login](docs/screenshots/login.png) |
 
 ---
 
