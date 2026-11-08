@@ -2,9 +2,16 @@
   <img src="frontend/public/logo-gymnasyum.png" alt="Logo Gymnasyum" width="96" />
   <h1>Gymnasyum Smart Reminder</h1>
   <p><strong>Sistem Manajemen Reminder &amp; Follow-up Pelanggan Berbasis Web</strong></p>
-  <p><em>Dicoding Capstone Project - ID: DB15-I020</em></p>
-  <p><strong>B26B15J007 - Naufal Fahmi Kartika - Full-Stack Web Developer</strong></p>
+  <p><em>Dicoding Capstone Project</em></p>
 </div>
+
+| Informasi Proyek | Detail |
+| :--- | :--- |
+| **Program** | Dicoding Capstone Project |
+| **Capstone ID** | DB15-I020 |
+| **Cohort ID** | B26B15J007 |
+| **Nama** | Naufal Fahmi Kartika |
+| **Kelas** | Full-Stack Web Developer |
 
 ---
 
