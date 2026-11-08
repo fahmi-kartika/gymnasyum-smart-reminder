@@ -3,6 +3,7 @@
   <h1>Gymnasyum Smart Reminder</h1>
   <p><strong>Sistem Manajemen Reminder &amp; Follow-up Pelanggan Berbasis Web</strong></p>
   <p><em>Dicoding Capstone Project - ID: DB15-I020</em></p>
+  <p><strong>B26B15J007 - Naufal Fahmi Kartika - Full-Stack Web Developer</strong></p>
 </div>
 
 ---
