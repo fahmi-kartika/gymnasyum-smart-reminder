@@ -65,15 +65,30 @@ export default function Schedules() {
   // Pengelompokan & filter jadwal berdasarkan tab
   const filteredSchedules = useMemo(() => {
     const now = new Date();
-    const sorted = [...schedules].sort((a, b) => new Date(a.class_time) - new Date(b.class_time));
 
     if (timeFilter === 'Upcoming') {
-      return sorted.filter(s => new Date(s.class_time) >= now);
+      return schedules
+        .filter(s => new Date(s.class_time) >= now)
+        .sort((a, b) => new Date(a.class_time) - new Date(b.class_time));
     }
+
     if (timeFilter === 'Past') {
-      return sorted.filter(s => new Date(s.class_time) < now);
+      return schedules
+        .filter(s => new Date(s.class_time) < now)
+        .sort((a, b) => new Date(b.class_time) - new Date(a.class_time));
     }
-    return sorted;
+
+    // Tab 'Semua': prioritaskan kelas Mendatang di depan (paling dekat lebih dahulu),
+    // lalu kelas yang sudah Selesai diletakkan di halaman belakang.
+    const upcoming = schedules
+      .filter(s => new Date(s.class_time) >= now)
+      .sort((a, b) => new Date(a.class_time) - new Date(b.class_time));
+
+    const past = schedules
+      .filter(s => new Date(s.class_time) < now)
+      .sort((a, b) => new Date(b.class_time) - new Date(a.class_time));
+
+    return [...upcoming, ...past];
   }, [schedules, timeFilter]);
 
   // Pagination

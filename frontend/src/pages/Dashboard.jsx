@@ -114,10 +114,12 @@ export default function Dashboard() {
   const availableSchedules = useMemo(() => {
     const now = new Date();
 
-    return schedules.filter(s => {
-      if (!s.class_time) return false;
-      return new Date(s.class_time) > now;
-    });
+    return schedules
+      .filter(s => {
+        if (!s.class_time) return false;
+        return new Date(s.class_time) > now;
+      })
+      .sort((a, b) => new Date(a.class_time) - new Date(b.class_time));
   }, [schedules]);
 
   // Jumlah pendaftar aktif pada tiap jadwal kelas untuk pengecekan kuota

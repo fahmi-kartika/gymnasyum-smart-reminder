@@ -4,7 +4,13 @@ const Joi = require('joi');
 // 1. Mengambil semua jadwal kelas (GET)
 const getAllSchedules = async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM schedules ORDER BY class_time ASC');
+    const result = await pool.query(`
+      SELECT * FROM schedules 
+      ORDER BY 
+        CASE WHEN class_time >= NOW() THEN 0 ELSE 1 END ASC,
+        CASE WHEN class_time >= NOW() THEN class_time END ASC,
+        class_time DESC
+    `);
     res.json({ success: true, data: result.rows });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Terjadi kesalahan di server', error: error.message });
