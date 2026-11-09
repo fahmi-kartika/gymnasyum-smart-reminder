@@ -23,11 +23,12 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Tab filter status pada tabel
-  const [statusFilter, setStatusFilter] = useState('All');
+  // Tab filter status pada tabel: 'Pending' (Perlu Difollow-up), 'Completed' (Selesai), 'All' (Semua)
+  const [statusFilter, setStatusFilter] = useState('Pending');
 
-  // Filter rentang waktu jadwal: 'Today' (Hari Ini) atau 'All' (Semua Hari)
-  const [dateRangeFilter, setDateRangeFilter] = useState('Today');
+  // Menyimpan status draft sementara yang menunggu konfirmasi tombol Submit
+  const [draftStatusMap, setDraftStatusMap] = useState({});
+  const [submittingStatusId, setSubmittingStatusId] = useState(null);
 
   // State Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,6 +114,9 @@ export default function Dashboard() {
 
   // Filter tabel berdasarkan tab status yang dipilih
   const filteredReminders = useMemo(() => {
+    if (statusFilter === 'Active') {
+      return activeRemindersByDate.filter(r => r.status === 'Scheduled' || r.status === 'Sent');
+    }
     if (statusFilter === 'All') return activeRemindersByDate;
     return activeRemindersByDate.filter(r => r.status === statusFilter);
   }, [activeRemindersByDate, statusFilter]);
@@ -214,6 +218,39 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
     }
   };
 
+  const handleSelectStatus = (reminder, newStatus) => {
+    if (newStatus === 'Responded' || newStatus === 'No Response') {
+      setDraftStatusMap(prev => ({ ...prev, [reminder.id]: newStatus }));
+      return;
+    }
+
+    setDraftStatusMap(prev => {
+      const { [reminder.id]: _, ...rest } = prev;
+      return rest;
+    });
+    handleStatusChange(reminder.id, newStatus);
+  };
+
+  const handleSubmitFinalStatus = async (reminderId) => {
+    const finalStatus = draftStatusMap[reminderId];
+    if (!finalStatus) return;
+
+    setSubmittingStatusId(reminderId);
+    try {
+      await API.patch(`/reminders/${reminderId}/status`, { status: finalStatus });
+      setDraftStatusMap(prev => {
+        const { [reminderId]: _, ...rest } = prev;
+        return rest;
+      });
+      setRefreshTrigger(prev => prev + 1);
+    } catch (error) {
+      console.error('Gagal menyimpan status final:', error);
+      alert('Gagal menyimpan status interaksi.');
+    } finally {
+      setSubmittingStatusId(null);
+    }
+  };
+
   const handleAddClick = () => {
     setFormData({ customer_id: '', schedule_id: '' });
     setIsDialogOpen(true);
@@ -264,6 +301,7 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
   const totalCount = activeRemindersByDate.length;
   const scheduledCount = activeRemindersByDate.filter(r => r.status === 'Scheduled').length;
   const sentCount = activeRemindersByDate.filter(r => r.status === 'Sent').length;
+  const activeCount = scheduledCount + sentCount;
   const respondedCount = activeRemindersByDate.filter(r => r.status === 'Responded').length;
   const noResponseCount = activeRemindersByDate.filter(r => r.status === 'No Response').length;
 
@@ -560,16 +598,28 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
 
             {/* Tab Filter Status */}
             <div className="flex flex-wrap items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-xs font-medium">
-            <button
-              onClick={() => { setStatusFilter('All'); setCurrentPage(1); }}
-              className={`px-2.5 py-1 rounded-md transition ${
-                statusFilter === 'All'
-                  ? 'bg-white text-gray-900 shadow-2xs font-semibold'
-                  : 'text-gray-500 hover:text-gray-900'
-              }`}
-            >
-              Semua ({totalCount})
-            </button>
+              <button
+                type="button"
+                onClick={() => { setStatusFilter('Active'); setCurrentPage(1); }}
+                className={`px-2.5 py-1 rounded-md transition ${
+                  statusFilter === 'Active'
+                    ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                Antrean Aktif ({activeCount})
+              </button>
+              <button
+                type="button"
+                onClick={() => { setStatusFilter('All'); setCurrentPage(1); }}
+                className={`px-2.5 py-1 rounded-md transition ${
+                  statusFilter === 'All'
+                    ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                Semua ({totalCount})
+              </button>
             <button
               onClick={() => { setStatusFilter('Scheduled'); setCurrentPage(1); }}
               className={`px-2.5 py-1 rounded-md transition ${
@@ -610,6 +660,7 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
             >
               No Response ({noResponseCount})
             </button>
+            </div>
           </div>
         </CardHeader>
 
@@ -622,13 +673,13 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <Table className="table-fixed w-full min-w-[760px]">
+              <Table className="table-fixed w-full min-w-[800px]">
                 <TableHeader>
                   <TableRow className="border-b border-gray-100 bg-gray-50/50">
-                    <TableHead className="w-[23%] text-xs font-semibold text-gray-500 pl-6">Member</TableHead>
+                    <TableHead className="w-[22%] text-xs font-semibold text-gray-500 pl-6">Member</TableHead>
                     <TableHead className="w-[25%] text-xs font-semibold text-gray-500">Kelas &amp; Jam</TableHead>
-                    <TableHead className="w-[12%] text-xs font-semibold text-gray-500">Prioritas</TableHead>
-                    <TableHead className="w-[22%] text-xs font-semibold text-gray-500">Status Interaksi</TableHead>
+                    <TableHead className="w-[11%] text-xs font-semibold text-gray-500">Prioritas</TableHead>
+                    <TableHead className="w-[24%] text-xs font-semibold text-gray-500">Status Interaksi</TableHead>
                     <TableHead className="w-[18%] text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -689,42 +740,67 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
                           </Badge>
                         </TableCell>
 
-                        {/* Status Interaksi dengan Dot Indicator */}
+                        {/* Status Interaksi dengan Dropdown dan Tombol Submit */}
                         <TableCell>
-                          <Select
-                            value={reminder.status || 'Scheduled'}
-                            onValueChange={(value) => handleStatusChange(reminder.id, value)}
-                          >
-                            <SelectTrigger className="w-[145px] h-8 text-xs font-medium bg-white border border-gray-200 shadow-2xs rounded-lg">
-                              <SelectValue placeholder="Pilih status" />
-                            </SelectTrigger>
-                            <SelectContent position="popper">
-                              <SelectItem value="Scheduled">
-                                <div className="flex items-center gap-2 text-xs">
-                                  <span className="w-2 h-2 rounded-full bg-amber-500" />
-                                  <span>Scheduled</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="Sent">
-                                <div className="flex items-center gap-2 text-xs">
-                                  <span className="w-2 h-2 rounded-full bg-blue-500" />
-                                  <span>Sent</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="Responded">
-                                <div className="flex items-center gap-2 text-xs">
-                                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                                  <span>Responded</span>
-                                </div>
-                              </SelectItem>
-                              <SelectItem value="No Response">
-                                <div className="flex items-center gap-2 text-xs">
-                                  <span className="w-2 h-2 rounded-full bg-red-500" />
-                                  <span>No Response</span>
-                                </div>
-                              </SelectItem>
-                            </SelectContent>
-                          </Select>
+                          {(() => {
+                            const isDraft = Boolean(draftStatusMap[reminder.id]);
+                            const currentStatus = draftStatusMap[reminder.id] || reminder.status || 'Scheduled';
+                            const isSubmitting = submittingStatusId === reminder.id;
+
+                            return (
+                              <div className="flex items-center gap-1.5">
+                                <Select
+                                  value={currentStatus}
+                                  onValueChange={(val) => handleSelectStatus(reminder, val)}
+                                >
+                                  <SelectTrigger className={`w-[130px] h-8 text-xs font-medium bg-white border shadow-2xs rounded-lg transition-all ${
+                                    isDraft ? 'border-amber-400 ring-2 ring-amber-100' : 'border-gray-200'
+                                  }`}>
+                                    <SelectValue placeholder="Pilih status" />
+                                  </SelectTrigger>
+                                  <SelectContent position="popper">
+                                    <SelectItem value="Scheduled">
+                                      <div className="flex items-center gap-2 text-xs">
+                                        <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                        <span>Scheduled</span>
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="Sent">
+                                      <div className="flex items-center gap-2 text-xs">
+                                        <span className="w-2 h-2 rounded-full bg-blue-500" />
+                                        <span>Sent</span>
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="Responded">
+                                      <div className="flex items-center gap-2 text-xs">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                                        <span>Responded</span>
+                                      </div>
+                                    </SelectItem>
+                                    <SelectItem value="No Response">
+                                      <div className="flex items-center gap-2 text-xs">
+                                        <span className="w-2 h-2 rounded-full bg-red-500" />
+                                        <span>No Response</span>
+                                      </div>
+                                    </SelectItem>
+                                  </SelectContent>
+                                </Select>
+
+                                {isDraft && (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    disabled={isSubmitting}
+                                    onClick={() => handleSubmitFinalStatus(reminder.id)}
+                                    className="h-8 px-2.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg shadow-2xs shrink-0 transition"
+                                    title="Submit dan rekam ke riwayat member"
+                                  >
+                                    {isSubmitting ? '...' : 'Submit'}
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })()}
                         </TableCell>
 
                         {/* Aksi */}
