@@ -1,11 +1,11 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import {
   Plus,
   Edit,
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Users,
+  ChevronDown,
   UserPlus,
   X
 } from 'lucide-react';
@@ -49,6 +49,9 @@ export default function Schedules() {
   const [rosterDialogOpen, setRosterDialogOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [customerSearch, setCustomerSearch] = useState('');
+  const [isMemberDropdownOpen, setIsMemberDropdownOpen] = useState(false);
+  const memberDropdownRef = useRef(null);
   const [isBooking, setIsBooking] = useState(false);
   const [cancellingReminderId, setCancellingReminderId] = useState(null);
   const [rosterError, setRosterError] = useState('');
@@ -217,6 +220,8 @@ export default function Schedules() {
   const handleOpenRoster = (schedule) => {
     setSelectedSchedule(schedule);
     setSelectedCustomerId('');
+    setCustomerSearch('');
+    setIsMemberDropdownOpen(false);
     setRosterError('');
     setRosterSuccess('');
     setRosterDialogOpen(true);
@@ -236,6 +241,8 @@ export default function Schedules() {
       const remRes = await API.get('/reminders');
       setReminders(remRes.data.data || remRes.data || []);
       setSelectedCustomerId('');
+      setCustomerSearch('');
+      setIsMemberDropdownOpen(false);
       setRosterSuccess('Member berhasil didaftarkan ke kelas!');
       setTimeout(() => setRosterSuccess(''), 3000);
     } catch (err) {
@@ -274,6 +281,36 @@ export default function Schedules() {
     const enrolledIds = new Set(currentScheduleRoster.map(r => r.customer_id));
     return customers.filter(c => !enrolledIds.has(c.id));
   }, [customers, currentScheduleRoster, selectedSchedule]);
+
+  // Filter daftar member yang belum terdaftar berdasarkan kata kunci pencarian
+  const filteredAvailableCustomers = useMemo(() => {
+    if (!customerSearch.trim()) return availableCustomers;
+    const q = customerSearch.toLowerCase();
+    return availableCustomers.filter(c =>
+      c.name.toLowerCase().includes(q) ||
+      (c.whatsapp_number && c.whatsapp_number.includes(q))
+    );
+  }, [availableCustomers, customerSearch]);
+
+  // Data objek member yang sedang terpilih
+  const selectedCustomerObj = useMemo(() => {
+    return customers.find(c => c.id.toString() === selectedCustomerId.toString());
+  }, [customers, selectedCustomerId]);
+
+  // Tutup dropdown pencarian jika admin mengklik di luar area dropdown
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (memberDropdownRef.current && !memberDropdownRef.current.contains(event.target)) {
+        setIsMemberDropdownOpen(false);
+      }
+    };
+    if (isMemberDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isMemberDropdownOpen]);
 
   const now = new Date();
   const totalClasses = schedules.length;
@@ -437,40 +474,27 @@ export default function Schedules() {
 
         {/* Modal Lihat Peserta & Booking Kelas */}
         <Dialog open={rosterDialogOpen} onOpenChange={setRosterDialogOpen}>
-          <DialogContent className="sm:max-w-[560px] p-6 rounded-xl border border-gray-200/90 shadow-lg bg-white">
+          <DialogContent className="sm:max-w-[520px] p-6 rounded-2xl border border-gray-200/90 shadow-xl bg-white">
             <DialogHeader className="gap-1 pb-3 border-b border-gray-100">
-              <div className="flex items-center justify-between">
-                <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-                  <Users className="text-blue-600" size={18} />
-                  <span>Peserta & Booking Kelas</span>
-                </DialogTitle>
-                {selectedSchedule && (
-                  <Badge
-                    variant="outline"
-                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
-                      currentScheduleRoster.length >= selectedSchedule.quota
-                        ? 'border-amber-300 text-amber-700 bg-amber-50'
-                        : 'border-blue-200 text-blue-700 bg-blue-50'
-                    }`}
-                  >
-                    Terisi {currentScheduleRoster.length} / {selectedSchedule.quota}
-                  </Badge>
-                )}
-              </div>
-              <DialogDescription className="text-xs text-gray-500 mt-1">
-                {selectedSchedule && (
-                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                    <span className="font-semibold text-gray-800">{selectedSchedule.class_name}</span>
-                    <span>•</span>
-                    <span>{formatDateTime(selectedSchedule.class_time)} ({formatTimeOnly(selectedSchedule.class_time)})</span>
-                    <span>•</span>
-                    <span>Coach: {selectedSchedule.instructor_name}</span>
-                  </span>
-                )}
+              <DialogTitle className="text-base font-bold text-gray-900">
+                Peserta & Booking Kelas
+              </DialogTitle>
+              <DialogDescription asChild>
+                <div className="text-xs text-gray-600 mt-1">
+                  {selectedSchedule && (
+                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                      <span className="font-semibold text-gray-900">{selectedSchedule.class_name}</span>
+                      <span className="text-gray-300">|</span>
+                      <span>{formatDateTime(selectedSchedule.class_time)}, {formatTimeOnly(selectedSchedule.class_time)}</span>
+                      <span className="text-gray-300">|</span>
+                      <span>Instruktur: {selectedSchedule.instructor_name}</span>
+                    </div>
+                  )}
+                </div>
               </DialogDescription>
             </DialogHeader>
 
-            {/* Notifikasi Error / Sukses */}
+            {/* Pesan Notifikasi Sukses / Error */}
             {rosterError && (
               <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center justify-between">
                 <span>{rosterError}</span>
@@ -485,114 +509,158 @@ export default function Schedules() {
               </div>
             )}
 
-            {/* Form Daftarkan Member Baru ke Kelas Ini */}
-            <div className="p-3.5 bg-gray-50/70 rounded-xl border border-gray-100 space-y-2.5">
-              <span className="text-xs font-semibold text-gray-800 block">
-                Daftarkan Member ke Kelas Ini
-              </span>
+            {/* Form Input Tambah Member dengan Fitur Pencarian di dalam Dropdown */}
+            <div className="space-y-2 pt-1">
+              <label className="text-xs font-semibold text-gray-700 block">
+                Tambah Member ke Kelas
+              </label>
+
               {selectedSchedule && currentScheduleRoster.length >= selectedSchedule.quota ? (
-                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200/80 rounded-lg p-2">
-                  Kuota kelas sudah penuh ({selectedSchedule.quota} peserta). Tidak dapat menambahkan peserta lagi kecuali ada yang dibatalkan.
+                <p className="text-xs text-amber-700 py-1 font-medium">
+                  Kuota kelas sudah penuh ({selectedSchedule.quota} peserta).
                 </p>
               ) : availableCustomers.length === 0 ? (
-                <p className="text-xs text-gray-500 italic">
-                  Semua member terdaftar telah masuk ke kelas ini.
+                <p className="text-xs text-gray-400 italic py-1">
+                  Semua member terdaftar sudah masuk ke kelas ini.
                 </p>
               ) : (
                 <form onSubmit={handleBookMember} className="flex items-center gap-2">
-                  <div className="flex-1">
-                    <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
-                      <SelectTrigger className="h-9 text-xs bg-white border border-gray-200 shadow-2xs rounded-lg w-full">
-                        <SelectValue placeholder="Pilih member gym..." />
-                      </SelectTrigger>
-                      <SelectContent position="popper" className="max-h-56">
-                        {availableCustomers.map((cust) => (
-                          <SelectItem key={cust.id} value={cust.id.toString()}>
-                            {cust.name} ({cust.whatsapp_number})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                  <div className="relative flex-1" ref={memberDropdownRef}>
+                    {/* Tombol Pemilih Member (Tampilan Dropdown) */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsMemberDropdownOpen(prev => !prev);
+                        setCustomerSearch('');
+                      }}
+                      className="w-full h-9 px-3 text-xs bg-white border border-gray-200 shadow-2xs rounded-lg flex items-center justify-between text-left hover:border-gray-300 transition"
+                    >
+                      <span className={selectedCustomerObj ? "text-gray-900 font-medium truncate" : "text-gray-400 truncate"}>
+                        {selectedCustomerObj
+                          ? `${selectedCustomerObj.name} (${selectedCustomerObj.whatsapp_number})`
+                          : "Pilih member..."}
+                      </span>
+                      <ChevronDown size={14} className="text-gray-400 shrink-0 ml-1" />
+                    </button>
+
+                    {/* Panel Dropdown Melayang dengan Kotak Pencarian di Bagian Atas */}
+                    {isMemberDropdownOpen && (
+                      <div className="absolute left-0 top-full mt-1 w-full bg-white border border-gray-200/90 rounded-xl shadow-lg z-50 overflow-hidden">
+                        <div className="p-2 border-b border-gray-100 bg-gray-50/50">
+                          <input
+                            type="text"
+                            autoFocus
+                            value={customerSearch}
+                            onChange={(e) => setCustomerSearch(e.target.value)}
+                            placeholder="Cari nama atau WhatsApp member..."
+                            className="w-full px-2.5 py-1.5 text-xs bg-white border border-gray-200 rounded-md outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        <div className="max-h-48 overflow-y-auto p-1 divide-y divide-gray-50">
+                          {filteredAvailableCustomers.length === 0 ? (
+                            <div className="py-4 text-center text-xs text-gray-400">
+                              Tidak ada member yang cocok.
+                            </div>
+                          ) : (
+                            filteredAvailableCustomers.map((cust) => (
+                              <button
+                                key={cust.id}
+                                type="button"
+                                onClick={() => {
+                                  setSelectedCustomerId(cust.id.toString());
+                                  setIsMemberDropdownOpen(false);
+                                  setCustomerSearch('');
+                                }}
+                                className={`w-full text-left px-3 py-2 text-xs rounded-md transition flex items-center justify-between ${
+                                  selectedCustomerId === cust.id.toString()
+                                    ? 'bg-blue-50 text-blue-700 font-semibold'
+                                    : 'text-gray-700 hover:bg-gray-100/80 hover:text-gray-900'
+                                }`}
+                              >
+                                <span className="truncate">{cust.name}</span>
+                                <span className="text-[11px] text-gray-400 ml-2 shrink-0">{cust.whatsapp_number}</span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
+
                   <Button
                     type="submit"
                     size="sm"
                     disabled={!selectedCustomerId || isBooking}
-                    className="h-9 px-3.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-2xs flex items-center gap-1.5 shrink-0"
+                    className="h-9 px-4 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-2xs shrink-0"
                   >
-                    <UserPlus size={14} />
-                    <span>{isBooking ? 'Mendaftarkan...' : 'Daftarkan'}</span>
+                    {isBooking ? 'Menyimpan...' : 'Daftarkan'}
                   </Button>
                 </form>
               )}
             </div>
 
-            {/* Tabel / Daftar Peserta yang Sudah Terdaftar */}
+            {/* Garis Pemisah Minimalis */}
+            <div className="border-t border-gray-100 my-1" />
+
+            {/* Daftar Peserta Terdaftar - Format Bersih (X/Y) */}
             <div className="space-y-2">
               <div className="flex items-center justify-between text-xs">
-                <span className="font-semibold text-gray-700">Daftar Peserta Terdaftar ({currentScheduleRoster.length})</span>
-                <span className="text-gray-400 text-[11px]">Sisa slot: {Math.max(0, (selectedSchedule?.quota || 0) - currentScheduleRoster.length)}</span>
+                <span className="font-semibold text-gray-800">
+                  Daftar Peserta ({currentScheduleRoster.length}/{selectedSchedule?.quota || 0})
+                </span>
               </div>
 
-              <div className="border border-gray-200/80 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+              <div className="max-h-56 overflow-y-auto divide-y divide-gray-100 pr-1">
                 {currentScheduleRoster.length === 0 ? (
-                  <div className="py-8 text-center text-xs text-gray-400">
+                  <div className="py-7 text-center text-xs text-gray-400">
                     Belum ada member yang terdaftar di kelas ini.
                   </div>
                 ) : (
-                  <Table className="table-fixed w-full">
-                    <TableHeader>
-                      <TableRow className="border-b border-gray-100 bg-gray-50/70 text-[11px]">
-                        <TableHead className="w-[45%] py-2 pl-4 font-semibold text-gray-500">Nama Member</TableHead>
-                        <TableHead className="w-[30%] py-2 font-semibold text-gray-500">Status</TableHead>
-                        <TableHead className="w-[25%] py-2 text-right pr-4 font-semibold text-gray-500">Aksi</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {currentScheduleRoster.map((item) => (
-                        <TableRow key={item.id} className="border-b border-gray-100 text-xs hover:bg-gray-50/50">
-                          <TableCell className="py-2.5 pl-4">
-                            <div className="font-medium text-gray-900 truncate">{item.customer_name}</div>
-                            <div className="text-[11px] text-gray-400 truncate">{item.whatsapp_number}</div>
-                          </TableCell>
-                          <TableCell className="py-2.5">
-                            <Badge
-                              variant="outline"
-                              className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${
-                                item.status === 'Responded'
-                                  ? 'text-emerald-700 border-emerald-200 bg-emerald-50'
-                                  : item.status === 'Sent'
-                                  ? 'text-blue-700 border-blue-200 bg-blue-50'
-                                  : item.status === 'No Response'
-                                  ? 'text-red-700 border-red-200 bg-red-50'
-                                  : 'text-amber-700 border-amber-200 bg-amber-50'
-                              }`}
-                            >
-                              {item.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="py-2.5 text-right pr-4">
-                            <Button
-                              type="button"
-                              variant="outline"
-                              size="sm"
-                              disabled={cancellingReminderId === item.id}
-                              onClick={() => handleCancelBooking(item.id)}
-                              className="h-7 px-2 text-[11px] text-red-600 hover:text-red-700 hover:bg-red-50 border-gray-200 hover:border-red-200"
-                              title="Batalkan keikutsertaan member"
-                            >
-                              {cancellingReminderId === item.id ? '...' : 'Batalkan'}
-                            </Button>
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                  currentScheduleRoster.map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center justify-between py-2.5 px-2 hover:bg-gray-50/80 rounded-lg transition"
+                    >
+                      <div className="min-w-0 pr-3">
+                        <div className="font-medium text-xs text-gray-900 truncate">
+                          {item.customer_name}
+                        </div>
+                        <div className="text-[11px] text-gray-400 truncate">
+                          {item.whatsapp_number}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 shrink-0">
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${
+                            item.status === 'Responded'
+                              ? 'text-emerald-700 border-emerald-200 bg-emerald-50'
+                              : item.status === 'Sent'
+                              ? 'text-blue-700 border-blue-200 bg-blue-50'
+                              : item.status === 'No Response'
+                              ? 'text-red-700 border-red-200 bg-red-50'
+                              : 'text-amber-700 border-amber-200 bg-amber-50'
+                          }`}
+                        >
+                          {item.status}
+                        </Badge>
+                        <button
+                          type="button"
+                          disabled={cancellingReminderId === item.id}
+                          onClick={() => handleCancelBooking(item.id)}
+                          className="text-[11px] text-red-600 hover:text-red-700 hover:underline transition font-medium disabled:opacity-50"
+                        >
+                          {cancellingReminderId === item.id ? '...' : 'Batalkan'}
+                        </button>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
             </div>
 
-            <DialogFooter className="mt-2 pt-3 border-t border-gray-100 flex justify-end">
+            <DialogFooter className="mt-2 pt-3 border-t border-gray-100 flex justify-end bg-transparent">
               <Button
                 type="button"
                 variant="outline"
@@ -777,7 +845,7 @@ export default function Schedules() {
                                 className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition"
                                 title="Lihat Peserta & Booking Kelas"
                               >
-                                <Users size={14} />
+                                <UserPlus size={14} />
                               </button>
                               <button
                                 onClick={() => handleEditClick(schedule)}

@@ -1,7 +1,6 @@
 import { useEffect, useState, useMemo } from 'react';
 import {
   MessageCircle,
-  Plus,
   Trash2,
   ChevronLeft,
   ChevronRight
@@ -13,12 +12,10 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
-import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Dashboard() {
   const [reminders, setReminders] = useState([]);
-  const [customers, setCustomers] = useState([]);
   const [schedules, setSchedules] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
@@ -34,39 +31,28 @@ export default function Dashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   // State untuk modal konfirmasi hapus
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [reminderToDelete, setReminderToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  const [formData, setFormData] = useState({
-    customer_id: '',
-    schedule_id: ''
-  });
-
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [remindersRes, customersRes, schedulesRes] = await Promise.all([
+        const [remindersRes, schedulesRes] = await Promise.all([
           API.get('/reminders'),
-          API.get('/customers'),
           API.get('/schedules')
         ]);
 
         setReminders(remindersRes.data.data || remindersRes.data);
-        setCustomers(customersRes.data.data || customersRes.data);
         setSchedules(schedulesRes.data.data || schedulesRes.data);
       } catch (error) {
-        console.error('Gagal mengambil data:', error);
+        console.error('Gagal mengambil data dashboard:', error);
       } finally {
         setLoading(false);
       }
     };
-
     fetchData();
   }, [refreshTrigger]);
 
@@ -118,34 +104,6 @@ export default function Dashboard() {
     const startIndex = (safeCurrentPage - 1) * pageSize;
     return filteredReminders.slice(startIndex, startIndex + pageSize);
   }, [filteredReminders, safeCurrentPage, pageSize]);
-
-  // Pilihan jadwal kelas aktif untuk modal booking (hanya kelas dengan jam yang belum lewat)
-  const availableSchedules = useMemo(() => {
-    const now = new Date();
-
-    return schedules
-      .filter(s => {
-        if (!s.class_time) return false;
-        return new Date(s.class_time) > now;
-      })
-      .sort((a, b) => new Date(a.class_time) - new Date(b.class_time));
-  }, [schedules]);
-
-  // Jumlah pendaftar aktif pada tiap jadwal kelas untuk pengecekan kuota
-  const scheduleBookedMap = useMemo(() => {
-    const map = {};
-    reminders.forEach(r => {
-      map[r.schedule_id] = (map[r.schedule_id] || 0) + 1;
-    });
-    return map;
-  }, [reminders]);
-
-  // Set ID jadwal kelas yang sudah pernah dibooking oleh member yang sedang dipilih
-  const bookedScheduleIdsByCustomer = useMemo(() => {
-    if (!formData.customer_id) return new Set();
-    const cId = parseInt(formData.customer_id, 10);
-    return new Set(reminders.filter(r => r.customer_id === cId).map(r => r.schedule_id));
-  }, [reminders, formData.customer_id]);
 
   const handleWhatsApp = async (reminder) => {
     if (!reminder.whatsapp_number) return;
@@ -239,33 +197,6 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
     }
   };
 
-  const handleAddClick = () => {
-    setFormData({ customer_id: '', schedule_id: '' });
-    setIsDialogOpen(true);
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
-    const payload = {
-      customer_id: parseInt(formData.customer_id, 10),
-      schedule_id: parseInt(formData.schedule_id, 10)
-    };
-
-    try {
-      await API.post('/reminders', payload);
-      setIsDialogOpen(false);
-      setRefreshTrigger(prev => prev + 1);
-    } catch (error) {
-      console.error('Gagal menyimpan reminder:', error);
-      const errorMsg = error.response?.data?.message || 'Gagal menambah reminder.';
-      alert(errorMsg);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   const handleDeleteClick = (reminder) => {
     setReminderToDelete(reminder);
     setDeleteDialogOpen(true);
@@ -296,7 +227,7 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
 
   return (
     <div className="space-y-6">
-      {/* Header Halaman & Aksi Cepat */}
+      {/* Header Halaman */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-gray-900">Dashboard Follow-up</h1>
@@ -304,126 +235,6 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
             Kelola antrean reminder jadwal kelas harian dan pantau kehadiran pelanggan.
           </p>
         </div>
-
-        <button
-          onClick={handleAddClick}
-          className="inline-flex items-center gap-2 px-3.5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700 text-xs font-semibold shadow-xs transition"
-        >
-          <Plus size={15} />
-          <span>Booking Kelas</span>
-        </button>
-
-        {/* Modal Booking Kelas Bergaya Shadcn */}
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="sm:max-w-[440px] p-6 rounded-xl border border-gray-200/90 shadow-lg bg-white">
-            <DialogHeader className="gap-1 pb-3 border-b border-gray-100">
-              <DialogTitle className="text-base font-bold text-gray-900">
-                Booking Kelas untuk Member
-              </DialogTitle>
-              <DialogDescription className="text-xs text-gray-500">
-                Daftarkan member ke sesi latihan untuk menjadwalkan reminder follow-up.
-              </DialogDescription>
-            </DialogHeader>
-
-            <form onSubmit={handleSubmit} className="space-y-4 pt-1">
-              <div className="space-y-1.5">
-                <Label htmlFor="customer" className="text-xs font-semibold text-gray-700">
-                  Pilih Member
-                </Label>
-                <Select
-                  value={formData.customer_id}
-                  onValueChange={(val) => setFormData(prev => ({ ...prev, customer_id: val, schedule_id: '' }))}
-                  required
-                >
-                  <SelectTrigger className="w-full h-9 text-xs bg-white border border-gray-200 shadow-2xs rounded-lg">
-                    <SelectValue placeholder="Pilih member yang terdaftar..." />
-                  </SelectTrigger>
-                  <SelectContent position="popper" className="max-h-56">
-                    {customers.map(c => (
-                      <SelectItem key={c.id} value={c.id.toString()}>
-                        <span className="text-xs">
-                          {c.name} {c.whatsapp_number ? `(${c.whatsapp_number})` : ''}
-                        </span>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="schedule" className="text-xs font-semibold text-gray-700">
-                  Pilih Jadwal Kelas
-                </Label>
-                <Select
-                  value={formData.schedule_id}
-                  onValueChange={(val) => setFormData(prev => ({ ...prev, schedule_id: val }))}
-                  required
-                >
-                  <SelectTrigger className="w-full h-9 text-xs bg-white border border-gray-200 shadow-2xs rounded-lg">
-                    <SelectValue placeholder="Pilih jadwal kelas aktif..." />
-                  </SelectTrigger>
-                  <SelectContent position="popper" className="max-h-56">
-                    {availableSchedules.length === 0 ? (
-                      <div className="p-3 text-xs text-gray-500 text-center">
-                        Tidak ada kelas aktif mulai hari ini ke depan.
-                      </div>
-                    ) : (
-                      availableSchedules.map(s => {
-                        const bookedCount = scheduleBookedMap[s.id] || 0;
-                        const isFull = s.quota && bookedCount >= s.quota;
-                        const isAlreadyBooked = bookedScheduleIdsByCustomer.has(s.id);
-                        const isDisabled = isFull || isAlreadyBooked;
-
-                        return (
-                          <SelectItem
-                            key={s.id}
-                            value={s.id.toString()}
-                            disabled={isDisabled}
-                          >
-                            <span className="text-xs">
-                              <span className="font-semibold text-gray-900">{s.class_name}</span>
-                              {' - '}
-                              <span className="text-gray-600">
-                                {new Date(s.class_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })} ({new Date(s.class_time).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB)
-                              </span>
-                              {isAlreadyBooked ? (
-                                <span className="ml-1 text-amber-600 font-medium"> (Sudah Terdaftar)</span>
-                              ) : isFull ? (
-                                <span className="ml-1 text-red-600 font-medium"> (Penuh: {bookedCount}/{s.quota})</span>
-                              ) : s.quota ? (
-                                <span className="ml-1 text-emerald-600 font-medium"> (Sisa {s.quota - bookedCount}/{s.quota})</span>
-                              ) : null}
-                            </span>
-                          </SelectItem>
-                        );
-                      })
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <DialogFooter className="mt-6 pt-3 border-t border-gray-100 flex justify-end gap-2 bg-transparent">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsDialogOpen(false)}
-                  className="h-8 px-3.5 text-xs font-medium border-gray-200 rounded-lg hover:bg-gray-100"
-                >
-                  Batal
-                </Button>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={isSubmitting}
-                  className="h-8 px-3.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-2xs"
-                >
-                  {isSubmitting ? 'Menyimpan...' : 'Simpan Data'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
 
         {/* Modal Konfirmasi Hapus Reminder Bergaya Shadcn */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>

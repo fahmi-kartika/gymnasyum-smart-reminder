@@ -142,17 +142,30 @@ function SelectScrollUpButton({
   ...props
 }) {
   return (
-    <SelectPrimitive.ScrollUpButton
+    <button
+      type="button"
       data-slot="select-scroll-up-button"
       className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4",
+        "z-10 flex w-full cursor-pointer items-center justify-center bg-popover py-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition [&_svg:not([class*='size-'])]:size-4",
         className
       )}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const content = e.currentTarget.closest('[data-slot="select-content"]');
+        const viewport = content?.querySelector('[data-radix-select-viewport]') || content?.querySelector('div[style*="overflow"]');
+        if (viewport) {
+          viewport.scrollBy({ top: -90, behavior: 'smooth' });
+        }
+      }}
       {...props}
     >
-      <ChevronUpIcon
-      />
-    </SelectPrimitive.ScrollUpButton>
+      <ChevronUpIcon />
+    </button>
   )
 }
 
@@ -161,17 +174,30 @@ function SelectScrollDownButton({
   ...props
 }) {
   return (
-    <SelectPrimitive.ScrollDownButton
+    <button
+      type="button"
       data-slot="select-scroll-down-button"
       className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4",
+        "z-10 flex w-full cursor-pointer items-center justify-center bg-popover py-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground transition [&_svg:not([class*='size-'])]:size-4",
         className
       )}
+      onPointerDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        const content = e.currentTarget.closest('[data-slot="select-content"]');
+        const viewport = content?.querySelector('[data-radix-select-viewport]') || content?.querySelector('div[style*="overflow"]');
+        if (viewport) {
+          viewport.scrollBy({ top: 90, behavior: 'smooth' });
+        }
+      }}
       {...props}
     >
-      <ChevronDownIcon
-      />
-    </SelectPrimitive.ScrollDownButton>
+      <ChevronDownIcon />
+    </button>
   )
 }
 
