@@ -44,13 +44,14 @@ Gymnasyum Smart Reminder adalah platform berbasis web yang dirancang untuk mempe
 - Sesi akun admin dan navigasi keluar (*logout*) terintegrasi pada sidebar.
 
 ### 2. Dashboard & Antrean Follow-up
-- Ringkasan metrik status antrean: Total Antrean, Scheduled, Sent, Responded, dan Tidak Ada Respons.
-- Pendaftaran (*booking*) member ke jadwal kelas dengan proteksi:
-  - Filter otomatis untuk jam kelas yang telah terlewat hari ini.
-  - Pencegahan pendaftaran ganda (*duplicate booking check*).
-  - Validasi sisa kuota kapasitas secara *real-time*.
-- Pembuatan pesan WhatsApp terstruktur yang mencakup nama member, nama kelas, tanggal, jam pelaksanaan, dan instruktur.
-- Pembaruan status interaksi langsung melalui dropdown (*Scheduled*, *Sent*, *Responded*, *No Response*).
+- **Fokus Harian (*Inbox Zero Model*)**: Khusus menampilkan sesi kelas latihan yang berlangsung pada hari ini agar alur kerja admin tetap terorganisir dan efisien.
+- **Tab Filter Antrean Terstruktur**:
+  - *Perlu Difollow-up* (Default): Menampilkan reminder berstatus `Scheduled` dan `Sent`.
+  - *Selesai*: Menampilkan member yang telah direspons (`Responded`) atau tidak ada respons (`No Response`).
+  - *Semua*: Rekap menyeluruh seluruh antrean reminder hari ini.
+- **Ringkasan Metrik Cepat**: Total Antrean Hari Ini, Belum Difollow-up, Pesan Terkirim, Tingkat Konfirmasi, dan Tidak Ada Respons.
+- **Pembuatan Pesan WhatsApp Cerdas**: Integrasi pesan reminder terstruktur otomatis berisi sapaan personal, nama kelas, tanggal, jam pelaksanaan, dan instruktur.
+- **Finalisasi Status Berbasis Konfirmasi**: Pembaruan status ke `Responded` atau `No Response` dilengkapi tombol *Submit* konfirmasi sebelum terekam permanen pada riwayat pelanggan.
 
 ### 3. Manajemen Data Member
 - Operasi CRUD (Create, Read, Update, Delete) data pelanggan.
@@ -58,10 +59,15 @@ Gymnasyum Smart Reminder adalah platform berbasis web yang dirancang untuk mempe
 - Pengelompokan tipe keanggotaan (VIP dan Regular) dengan tab filter cepat.
 - Modal riwayat aktivitas pengingat per member lengkap dengan indikator status.
 
-### 4. Manajemen Jadwal Kelas
-- Operasi CRUD jadwal sesi latihan kebugaran.
-- Pengaturan kapasitas kuota peserta per sesi kelas.
+### 4. Manajemen Jadwal Kelas & Booking Peserta
+- Operasi CRUD jadwal sesi latihan kebugaran (nama kelas, waktu, instruktur, kuota).
 - Filter jadwal berdasarkan waktu pelaksanaan (Semua, Mendatang, Selesai).
+- **Indikator Kuota Terisi**: Kolom kuota menampilkan jumlah peserta yang telah terdaftar terhadap kapasitas kelas (misal: `4/15 Peserta`), lengkap dengan badge *Penuh*.
+- **Pusat Booking & Daftar Peserta Kelas**:
+  - Modal manajemen peserta kelas yang terhubung langsung pada setiap sesi latihan.
+  - **Pencarian Member Terintegrasi**: Dropdown pemilihan member dilengkapi kotak pencarian instan (nama atau nomor WhatsApp) langsung di dalam menu dropdown.
+  - **Proteksi Kapasitas & Duplikasi**: Pencegahan pendaftaran member ganda pada kelas yang sama (*duplicate booking check*) serta validasi kuota penuh secara *real-time*.
+  - **Daftar Peserta Terdaftar**: Menampilkan seluruh member yang terdaftar pada sesi kelas beserta status follow-up dan opsi pembatalan pendaftaran.
 
 ### 5. Standar Antarmuka (UI/UX)
 - Antarmuka berbasis komponen Shadcn UI dengan tema aksen Royal Blue (`#2563eb`).
