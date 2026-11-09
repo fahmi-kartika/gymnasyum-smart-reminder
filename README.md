@@ -19,9 +19,13 @@
 | :---: | :---: |
 | ![Dashboard Follow-up](docs/screenshots/dashboard.png) | ![Data Member](docs/screenshots/customers.png) |
 
-| Manajemen Jadwal Kelas | Halaman Login |
+| Manajemen Jadwal Kelas | Modal Booking Peserta Kelas |
 | :---: | :---: |
-| ![Jadwal Kelas](docs/screenshots/schedules.png) | ![Halaman Login](docs/screenshots/login.png) |
+| ![Jadwal Kelas](docs/screenshots/schedules.png) | ![Modal Booking Peserta Kelas](docs/screenshots/booking.png) |
+
+| Halaman Login Admin |
+| :---: |
+| ![Halaman Login](docs/screenshots/login.png) |
 
 ---
 
