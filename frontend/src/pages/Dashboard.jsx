@@ -26,6 +26,9 @@ export default function Dashboard() {
   // Tab filter status pada tabel
   const [statusFilter, setStatusFilter] = useState('All');
 
+  // Filter rentang waktu jadwal: 'Today' (Hari Ini) atau 'All' (Semua Hari)
+  const [dateRangeFilter, setDateRangeFilter] = useState('Today');
+
   // State Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -66,39 +69,53 @@ export default function Dashboard() {
     fetchData();
   }, [refreshTrigger]);
 
-  // Antrean reminder hari ini dengan penyortiran berjenjang (jam kelas lalu prioritas)
-  const todaysReminders = useMemo(() => {
+  // Antrean reminder berdasarkan rentang waktu dengan penyortiran berjenjang
+  const activeRemindersByDate = useMemo(() => {
     const todayStr = new Date().toLocaleDateString('en-CA');
+    const now = new Date();
 
     const filtered = reminders.filter(r => {
       const schedule = schedules.find(s => s.id === r.schedule_id);
       const classTime = r.class_time || schedule?.class_time;
       if (!classTime) return false;
-      return new Date(classTime).toLocaleDateString('en-CA') === todayStr;
+
+      if (dateRangeFilter === 'Today') {
+        return new Date(classTime).toLocaleDateString('en-CA') === todayStr;
+      }
+      return true;
     });
 
     const priorityWeight = { High: 3, Medium: 2, Low: 1 };
     return filtered.sort((a, b) => {
       const scheduleA = schedules.find(s => s.id === a.schedule_id);
       const scheduleB = schedules.find(s => s.id === b.schedule_id);
-      const timeA = new Date(a.class_time || scheduleA?.class_time || 0).getTime();
-      const timeB = new Date(b.class_time || scheduleB?.class_time || 0).getTime();
+      const dateA = new Date(a.class_time || scheduleA?.class_time || 0);
+      const dateB = new Date(b.class_time || scheduleB?.class_time || 0);
 
-      if (timeA !== timeB) {
-        return timeA - timeB;
+      // Pada mode Semua Hari, prioritaskan tanggal terdekat/hari ini terlebih dahulu
+      if (dateRangeFilter === 'All') {
+        const isUpcomingA = dateA >= now ? 0 : 1;
+        const isUpcomingB = dateB >= now ? 0 : 1;
+        if (isUpcomingA !== isUpcomingB) {
+          return isUpcomingA - isUpcomingB;
+        }
+      }
+
+      if (dateA.getTime() !== dateB.getTime()) {
+        return dateA.getTime() - dateB.getTime();
       }
 
       const weightA = priorityWeight[a.priority] || 0;
       const weightB = priorityWeight[b.priority] || 0;
       return weightB - weightA;
     });
-  }, [reminders, schedules]);
+  }, [reminders, schedules, dateRangeFilter]);
 
   // Filter tabel berdasarkan tab status yang dipilih
   const filteredReminders = useMemo(() => {
-    if (statusFilter === 'All') return todaysReminders;
-    return todaysReminders.filter(r => r.status === statusFilter);
-  }, [todaysReminders, statusFilter]);
+    if (statusFilter === 'All') return activeRemindersByDate;
+    return activeRemindersByDate.filter(r => r.status === statusFilter);
+  }, [activeRemindersByDate, statusFilter]);
 
   // Total Halaman dan Halaman Aman
   const totalPages = Math.max(1, Math.ceil(filteredReminders.length / pageSize));
@@ -244,11 +261,11 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
     }
   };
 
-  const totalCount = todaysReminders.length;
-  const scheduledCount = todaysReminders.filter(r => r.status === 'Scheduled').length;
-  const sentCount = todaysReminders.filter(r => r.status === 'Sent').length;
-  const respondedCount = todaysReminders.filter(r => r.status === 'Responded').length;
-  const noResponseCount = todaysReminders.filter(r => r.status === 'No Response').length;
+  const totalCount = activeRemindersByDate.length;
+  const scheduledCount = activeRemindersByDate.filter(r => r.status === 'Scheduled').length;
+  const sentCount = activeRemindersByDate.filter(r => r.status === 'Sent').length;
+  const respondedCount = activeRemindersByDate.filter(r => r.status === 'Responded').length;
+  const noResponseCount = activeRemindersByDate.filter(r => r.status === 'No Response').length;
 
   return (
     <div className="space-y-6">
@@ -423,7 +440,9 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
         {/* Card 1 */}
         <Card className="rounded-xl border border-gray-200/90 shadow-2xs hover:shadow-xs transition bg-white">
           <CardHeader className="pb-2">
-            <span className="text-xs font-semibold text-gray-500">Total Reminder Hari Ini</span>
+            <span className="text-xs font-semibold text-gray-500">
+              {dateRangeFilter === 'Today' ? 'Total Reminder Hari Ini' : 'Total Semua Reminder'}
+            </span>
           </CardHeader>
           <CardContent className="space-y-1">
             <div className="text-3xl font-extrabold tracking-tight text-gray-900">
@@ -500,18 +519,47 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
 
       {/* Tabel Antrean dengan Filter Tab Bergaya Shadcn */}
       <Card className="rounded-xl border border-gray-200/90 shadow-2xs bg-white">
-        <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-3 border-b border-gray-100">
+        <CardHeader className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 pb-3 border-b border-gray-100">
           <div>
             <CardTitle className="text-base font-bold text-gray-900">
-              Antrean Follow-up Hari Ini
+              {dateRangeFilter === 'Today' ? 'Antrean Follow-up Hari Ini' : 'Semua Antrean Follow-up'}
             </CardTitle>
             <CardDescription className="text-xs text-gray-500 mt-0.5">
-              Daftar member yang memiliki jadwal latihan hari ini, disortir berdasarkan jam dan urgensi.
+              {dateRangeFilter === 'Today'
+                ? 'Daftar member yang memiliki jadwal latihan hari ini, disortir berdasarkan jam dan urgensi.'
+                : 'Seluruh daftar antrean reminder dari semua tanggal jadwal latihan.'}
             </CardDescription>
           </div>
 
-          {/* Tab Filter Status */}
-          <div className="flex flex-wrap items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-xs font-medium">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Toggle Filter Waktu: Hari Ini vs Semua Hari */}
+            <div className="flex items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-xs font-medium">
+              <button
+                type="button"
+                onClick={() => { setDateRangeFilter('Today'); setCurrentPage(1); }}
+                className={`px-2.5 py-1 rounded-md transition ${
+                  dateRangeFilter === 'Today'
+                    ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                Hari Ini
+              </button>
+              <button
+                type="button"
+                onClick={() => { setDateRangeFilter('All'); setCurrentPage(1); }}
+                className={`px-2.5 py-1 rounded-md transition ${
+                  dateRangeFilter === 'All'
+                    ? 'bg-white text-gray-900 shadow-2xs font-semibold'
+                    : 'text-gray-500 hover:text-gray-900'
+                }`}
+              >
+                Semua Hari
+              </button>
+            </div>
+
+            {/* Tab Filter Status */}
+            <div className="flex flex-wrap items-center gap-1 bg-gray-100 p-0.5 rounded-lg text-xs font-medium">
             <button
               onClick={() => { setStatusFilter('All'); setCurrentPage(1); }}
               className={`px-2.5 py-1 rounded-md transition ${
@@ -606,13 +654,22 @@ Apakah Anda akan hadir di sesi latihan ini? Silakan balas pesan ini untuk konfir
                         <TableCell className="text-xs">
                           <div className="font-medium text-gray-900 truncate">{reminder.class_name}</div>
                           <div className="text-[11px] text-gray-500 mt-0.5">
-                            {reminder.class_time
-                              ? new Date(reminder.class_time).toLocaleTimeString('id-ID', {
+                            {reminder.class_time ? (
+                              <>
+                                {dateRangeFilter === 'All' && (
+                                  <span className="font-medium text-gray-700 mr-1">
+                                    {new Date(reminder.class_time).toLocaleDateString('id-ID', { day: 'numeric', month: 'short' })},
+                                  </span>
+                                )}
+                                {new Date(reminder.class_time).toLocaleTimeString('id-ID', {
                                   hour: '2-digit',
                                   minute: '2-digit'
-                                })
-                              : '-'}{' '}
-                            WIB
+                                })}{' '}
+                                WIB
+                              </>
+                            ) : (
+                              '-'
+                            )}
                           </div>
                         </TableCell>
 
