@@ -4,7 +4,10 @@ import {
   Edit,
   Trash2,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Users,
+  UserPlus,
+  X
 } from 'lucide-react';
 import API from '../services/api';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -19,6 +22,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 
 export default function Schedules() {
   const [schedules, setSchedules] = useState([]);
+  const [reminders, setReminders] = useState([]);
+  const [customers, setCustomers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
@@ -40,6 +45,15 @@ export default function Schedules() {
   const [scheduleToDelete, setScheduleToDelete] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // State untuk Modal Roster Peserta & Booking
+  const [rosterDialogOpen, setRosterDialogOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [isBooking, setIsBooking] = useState(false);
+  const [cancellingReminderId, setCancellingReminderId] = useState(null);
+  const [rosterError, setRosterError] = useState('');
+  const [rosterSuccess, setRosterSuccess] = useState('');
+
   const [formData, setFormData] = useState({
     class_name: '',
     class_time: '',
@@ -48,18 +62,24 @@ export default function Schedules() {
   });
 
   useEffect(() => {
-    const fetchSchedules = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const response = await API.get('/schedules');
-        setSchedules(response.data.data || response.data);
+        const [schedRes, remRes, custRes] = await Promise.all([
+          API.get('/schedules'),
+          API.get('/reminders'),
+          API.get('/customers')
+        ]);
+        setSchedules(schedRes.data.data || schedRes.data || []);
+        setReminders(remRes.data.data || remRes.data || []);
+        setCustomers(custRes.data.data || custRes.data || []);
       } catch (error) {
-        console.error('Gagal mengambil data schedules:', error);
+        console.error('Gagal mengambil data:', error);
       } finally {
         setLoading(false);
       }
     };
-    fetchSchedules();
+    fetchData();
   }, [refreshTrigger]);
 
   // Pengelompokan & filter jadwal berdasarkan tab
@@ -193,6 +213,67 @@ export default function Schedules() {
       minute: '2-digit'
     }).format(date) + ' WIB';
   };
+
+  const handleOpenRoster = (schedule) => {
+    setSelectedSchedule(schedule);
+    setSelectedCustomerId('');
+    setRosterError('');
+    setRosterSuccess('');
+    setRosterDialogOpen(true);
+  };
+
+  const handleBookMember = async (e) => {
+    e.preventDefault();
+    if (!selectedCustomerId || !selectedSchedule) return;
+    setIsBooking(true);
+    setRosterError('');
+    setRosterSuccess('');
+    try {
+      await API.post('/reminders', {
+        customer_id: Number(selectedCustomerId),
+        schedule_id: selectedSchedule.id
+      });
+      const remRes = await API.get('/reminders');
+      setReminders(remRes.data.data || remRes.data || []);
+      setSelectedCustomerId('');
+      setRosterSuccess('Member berhasil didaftarkan ke kelas!');
+      setTimeout(() => setRosterSuccess(''), 3000);
+    } catch (err) {
+      setRosterError(err.response?.data?.message || 'Gagal mendaftarkan member.');
+    } finally {
+      setIsBooking(false);
+    }
+  };
+
+  const handleCancelBooking = async (reminderId) => {
+    setCancellingReminderId(reminderId);
+    setRosterError('');
+    setRosterSuccess('');
+    try {
+      await API.delete(`/reminders/${reminderId}`);
+      const remRes = await API.get('/reminders');
+      setReminders(remRes.data.data || remRes.data || []);
+      setRosterSuccess('Pendaftaran member berhasil dibatalkan.');
+      setTimeout(() => setRosterSuccess(''), 3000);
+    } catch (err) {
+      setRosterError(err.response?.data?.message || 'Gagal membatalkan pendaftaran.');
+    } finally {
+      setCancellingReminderId(null);
+    }
+  };
+
+  // Peserta yang terdaftar di jadwal yang dipilih
+  const currentScheduleRoster = useMemo(() => {
+    if (!selectedSchedule) return [];
+    return reminders.filter(r => r.schedule_id === selectedSchedule.id);
+  }, [reminders, selectedSchedule]);
+
+  // Daftar member yang belum terdaftar di jadwal yang dipilih
+  const availableCustomers = useMemo(() => {
+    if (!selectedSchedule) return [];
+    const enrolledIds = new Set(currentScheduleRoster.map(r => r.customer_id));
+    return customers.filter(c => !enrolledIds.has(c.id));
+  }, [customers, currentScheduleRoster, selectedSchedule]);
 
   const now = new Date();
   const totalClasses = schedules.length;
@@ -353,6 +434,177 @@ export default function Schedules() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+
+        {/* Modal Lihat Peserta & Booking Kelas */}
+        <Dialog open={rosterDialogOpen} onOpenChange={setRosterDialogOpen}>
+          <DialogContent className="sm:max-w-[560px] p-6 rounded-xl border border-gray-200/90 shadow-lg bg-white">
+            <DialogHeader className="gap-1 pb-3 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+                  <Users className="text-blue-600" size={18} />
+                  <span>Peserta & Booking Kelas</span>
+                </DialogTitle>
+                {selectedSchedule && (
+                  <Badge
+                    variant="outline"
+                    className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                      currentScheduleRoster.length >= selectedSchedule.quota
+                        ? 'border-amber-300 text-amber-700 bg-amber-50'
+                        : 'border-blue-200 text-blue-700 bg-blue-50'
+                    }`}
+                  >
+                    Terisi {currentScheduleRoster.length} / {selectedSchedule.quota}
+                  </Badge>
+                )}
+              </div>
+              <DialogDescription className="text-xs text-gray-500 mt-1">
+                {selectedSchedule && (
+                  <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span className="font-semibold text-gray-800">{selectedSchedule.class_name}</span>
+                    <span>•</span>
+                    <span>{formatDateTime(selectedSchedule.class_time)} ({formatTimeOnly(selectedSchedule.class_time)})</span>
+                    <span>•</span>
+                    <span>Coach: {selectedSchedule.instructor_name}</span>
+                  </span>
+                )}
+              </DialogDescription>
+            </DialogHeader>
+
+            {/* Notifikasi Error / Sukses */}
+            {rosterError && (
+              <div className="p-2.5 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs flex items-center justify-between">
+                <span>{rosterError}</span>
+                <button onClick={() => setRosterError('')} className="text-red-500 hover:text-red-700">
+                  <X size={14} />
+                </button>
+              </div>
+            )}
+            {rosterSuccess && (
+              <div className="p-2.5 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs">
+                {rosterSuccess}
+              </div>
+            )}
+
+            {/* Form Daftarkan Member Baru ke Kelas Ini */}
+            <div className="p-3.5 bg-gray-50/70 rounded-xl border border-gray-100 space-y-2.5">
+              <span className="text-xs font-semibold text-gray-800 block">
+                Daftarkan Member ke Kelas Ini
+              </span>
+              {selectedSchedule && currentScheduleRoster.length >= selectedSchedule.quota ? (
+                <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200/80 rounded-lg p-2">
+                  Kuota kelas sudah penuh ({selectedSchedule.quota} peserta). Tidak dapat menambahkan peserta lagi kecuali ada yang dibatalkan.
+                </p>
+              ) : availableCustomers.length === 0 ? (
+                <p className="text-xs text-gray-500 italic">
+                  Semua member terdaftar telah masuk ke kelas ini.
+                </p>
+              ) : (
+                <form onSubmit={handleBookMember} className="flex items-center gap-2">
+                  <div className="flex-1">
+                    <Select value={selectedCustomerId} onValueChange={setSelectedCustomerId}>
+                      <SelectTrigger className="h-9 text-xs bg-white border border-gray-200 shadow-2xs rounded-lg w-full">
+                        <SelectValue placeholder="Pilih member gym..." />
+                      </SelectTrigger>
+                      <SelectContent position="popper" className="max-h-56">
+                        {availableCustomers.map((cust) => (
+                          <SelectItem key={cust.id} value={cust.id.toString()}>
+                            {cust.name} ({cust.whatsapp_number})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={!selectedCustomerId || isBooking}
+                    className="h-9 px-3.5 text-xs font-semibold rounded-lg bg-blue-600 text-white hover:bg-blue-700 shadow-2xs flex items-center gap-1.5 shrink-0"
+                  >
+                    <UserPlus size={14} />
+                    <span>{isBooking ? 'Mendaftarkan...' : 'Daftarkan'}</span>
+                  </Button>
+                </form>
+              )}
+            </div>
+
+            {/* Tabel / Daftar Peserta yang Sudah Terdaftar */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-semibold text-gray-700">Daftar Peserta Terdaftar ({currentScheduleRoster.length})</span>
+                <span className="text-gray-400 text-[11px]">Sisa slot: {Math.max(0, (selectedSchedule?.quota || 0) - currentScheduleRoster.length)}</span>
+              </div>
+
+              <div className="border border-gray-200/80 rounded-xl overflow-hidden max-h-60 overflow-y-auto">
+                {currentScheduleRoster.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-gray-400">
+                    Belum ada member yang terdaftar di kelas ini.
+                  </div>
+                ) : (
+                  <Table className="table-fixed w-full">
+                    <TableHeader>
+                      <TableRow className="border-b border-gray-100 bg-gray-50/70 text-[11px]">
+                        <TableHead className="w-[45%] py-2 pl-4 font-semibold text-gray-500">Nama Member</TableHead>
+                        <TableHead className="w-[30%] py-2 font-semibold text-gray-500">Status</TableHead>
+                        <TableHead className="w-[25%] py-2 text-right pr-4 font-semibold text-gray-500">Aksi</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {currentScheduleRoster.map((item) => (
+                        <TableRow key={item.id} className="border-b border-gray-100 text-xs hover:bg-gray-50/50">
+                          <TableCell className="py-2.5 pl-4">
+                            <div className="font-medium text-gray-900 truncate">{item.customer_name}</div>
+                            <div className="text-[11px] text-gray-400 truncate">{item.whatsapp_number}</div>
+                          </TableCell>
+                          <TableCell className="py-2.5">
+                            <Badge
+                              variant="outline"
+                              className={`text-[10px] font-medium px-2 py-0.5 rounded-md ${
+                                item.status === 'Responded'
+                                  ? 'text-emerald-700 border-emerald-200 bg-emerald-50'
+                                  : item.status === 'Sent'
+                                  ? 'text-blue-700 border-blue-200 bg-blue-50'
+                                  : item.status === 'No Response'
+                                  ? 'text-red-700 border-red-200 bg-red-50'
+                                  : 'text-amber-700 border-amber-200 bg-amber-50'
+                              }`}
+                            >
+                              {item.status}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="py-2.5 text-right pr-4">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              disabled={cancellingReminderId === item.id}
+                              onClick={() => handleCancelBooking(item.id)}
+                              className="h-7 px-2 text-[11px] text-red-600 hover:text-red-700 hover:bg-red-50 border-gray-200 hover:border-red-200"
+                              title="Batalkan keikutsertaan member"
+                            >
+                              {cancellingReminderId === item.id ? '...' : 'Batalkan'}
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                )}
+              </div>
+            </div>
+
+            <DialogFooter className="mt-2 pt-3 border-t border-gray-100 flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setRosterDialogOpen(false)}
+                className="h-8 px-4 text-xs font-medium border-gray-200 rounded-lg hover:bg-gray-100"
+              >
+                Tutup
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* 3 Kartu Ringkasan Jadwal Kelas */}
@@ -459,12 +711,12 @@ export default function Schedules() {
               <Table className="table-fixed w-full min-w-[700px]">
                 <TableHeader>
                   <TableRow className="border-b border-gray-100 bg-gray-50/50">
-                    <TableHead className="w-[25%] text-xs font-semibold text-gray-500 pl-6">Nama Kelas</TableHead>
-                    <TableHead className="w-[22%] text-xs font-semibold text-gray-500">Tanggal &amp; Waktu</TableHead>
-                    <TableHead className="w-[18%] text-xs font-semibold text-gray-500">Instruktur</TableHead>
-                    <TableHead className="w-[12%] text-xs font-semibold text-gray-500">Kuota</TableHead>
-                    <TableHead className="w-[12%] text-xs font-semibold text-gray-500">Status</TableHead>
-                    <TableHead className="w-[11%] text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
+                    <TableHead className="w-[24%] text-xs font-semibold text-gray-500 pl-6">Nama Kelas</TableHead>
+                    <TableHead className="w-[20%] text-xs font-semibold text-gray-500">Tanggal &amp; Waktu</TableHead>
+                    <TableHead className="w-[17%] text-xs font-semibold text-gray-500">Instruktur</TableHead>
+                    <TableHead className="w-[15%] text-xs font-semibold text-gray-500">Kuota</TableHead>
+                    <TableHead className="w-[10%] text-xs font-semibold text-gray-500">Status</TableHead>
+                    <TableHead className="w-[14%] text-xs font-semibold text-gray-500 text-right pr-6">Aksi</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -477,6 +729,8 @@ export default function Schedules() {
                   ) : (
                     paginatedSchedules.map((schedule) => {
                       const isUpcoming = new Date(schedule.class_time) >= now;
+                      const bookedCount = reminders.filter(r => r.schedule_id === schedule.id).length;
+                      const isFull = bookedCount >= schedule.quota;
                       return (
                         <TableRow key={schedule.id} className="border-b border-gray-100 hover:bg-gray-50/60 transition">
                           <TableCell className="pl-6 font-medium text-xs text-gray-900 truncate">
@@ -494,8 +748,15 @@ export default function Schedules() {
                             {schedule.instructor_name}
                           </TableCell>
                           <TableCell className="text-xs">
-                            <span className="font-semibold text-gray-900">{schedule.quota}</span>
-                            <span className="text-gray-500 text-[11px] ml-1">Peserta</span>
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="font-semibold text-gray-900">{bookedCount}/{schedule.quota}</span>
+                              <span className="text-gray-500 text-[11px]">Peserta</span>
+                              {isFull && (
+                                <Badge variant="outline" className="text-[9px] px-1 py-0 border-amber-300 text-amber-700 bg-amber-50">
+                                  Penuh
+                                </Badge>
+                              )}
+                            </div>
                           </TableCell>
                           <TableCell>
                             <Badge
@@ -511,6 +772,13 @@ export default function Schedules() {
                           </TableCell>
                           <TableCell className="text-right pr-6">
                             <div className="flex items-center justify-end gap-1.5">
+                              <button
+                                onClick={() => handleOpenRoster(schedule)}
+                                className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition"
+                                title="Lihat Peserta & Booking Kelas"
+                              >
+                                <Users size={14} />
+                              </button>
                               <button
                                 onClick={() => handleEditClick(schedule)}
                                 className="p-1.5 rounded-lg text-gray-400 hover:text-blue-600 hover:bg-blue-50 border border-transparent hover:border-blue-200 transition"
