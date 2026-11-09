@@ -25,7 +25,7 @@
 
 | Template Pengingat WhatsApp | Halaman Login Admin |
 | :---: | :---: |
-| ![Template Pengingat WhatsApp](docs/screenshots/wa.png) | ![Halaman Login](docs/screenshots/login.png) |
+| ![Template Pengingat WhatsApp](docs/screenshots/wa.png?v=2) | ![Halaman Login](docs/screenshots/login.png) |
 
 ---
 
