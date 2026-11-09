@@ -23,9 +23,9 @@
 | :---: | :---: |
 | ![Jadwal Kelas](docs/screenshots/schedules.png) | ![Modal Booking Peserta Kelas](docs/screenshots/booking.png) |
 
-| Halaman Login Admin |
-| :---: |
-| ![Halaman Login](docs/screenshots/login.png) |
+| Template Pengingat WhatsApp | Halaman Login Admin |
+| :---: | :---: |
+| ![Template Pengingat WhatsApp](docs/screenshots/wa.png) | ![Halaman Login](docs/screenshots/login.png) |
 
 ---
 
